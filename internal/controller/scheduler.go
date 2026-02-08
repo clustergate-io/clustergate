@@ -3,15 +3,15 @@ package controller
 import (
 	"time"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 // CheckSchedule determines which resolved checks are due for execution based on
 // their individual intervals and existing status timestamps.
 // Returns the checks that need to run and the shortest remaining interval for requeue.
-func CheckSchedule(resolved []ResolvedCheck, existingStatuses []preflightv1alpha1.CheckStatus, now time.Time) (due []ResolvedCheck, carried []preflightv1alpha1.CheckStatus, nextRequeue time.Duration) {
+func CheckSchedule(resolved []ResolvedCheck, existingStatuses []clustergatev1alpha1.CheckStatus, now time.Time) (due []ResolvedCheck, carried []clustergatev1alpha1.CheckStatus, nextRequeue time.Duration) {
 	// Build a lookup map from existing statuses
-	statusMap := make(map[string]preflightv1alpha1.CheckStatus, len(existingStatuses))
+	statusMap := make(map[string]clustergatev1alpha1.CheckStatus, len(existingStatuses))
 	for _, s := range existingStatuses {
 		statusMap[s.Name] = s
 	}

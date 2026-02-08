@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 // ResolvedCheck is the fully-resolved, flat representation of a check to execute.
@@ -23,8 +23,8 @@ type ResolvedCheck struct {
 	// BuiltinName is the registered name of a built-in check.
 	BuiltinName string
 
-	// PreflightCheckName is the metadata.name of the PreflightCheck CR.
-	PreflightCheckName string
+	// GateCheckName is the metadata.name of the GateCheck CR.
+	GateCheckName string
 
 	// Severity is the resolved severity for this check.
 	Severity string
@@ -46,12 +46,12 @@ type ResolvedCheck struct {
 // Merge semantics:
 // 1. Profiles processed in listing order; later profiles override earlier for same identifier
 // 2. Inline spec.checks[] override any profile-sourced check with same identifier
-func ResolveChecks(ctx context.Context, c client.Client, spec preflightv1alpha1.ClusterReadinessSpec, defaultInterval time.Duration) ([]ResolvedCheck, error) {
+func ResolveChecks(ctx context.Context, c client.Client, spec clustergatev1alpha1.ClusterReadinessSpec, defaultInterval time.Duration) ([]ResolvedCheck, error) {
 	resolved := make(map[string]ResolvedCheck)
 
 	// Process profiles in order
 	for _, profileRef := range spec.Profiles {
-		var profile preflightv1alpha1.PreflightProfile
+		var profile clustergatev1alpha1.GateProfile
 		if err := c.Get(ctx, types.NamespacedName{Name: profileRef.Name}, &profile); err != nil {
 			return nil, err
 		}
@@ -96,16 +96,16 @@ func ResolveChecks(ctx context.Context, c client.Client, spec preflightv1alpha1.
 }
 
 // resolveProfileCheckRef converts a profile check reference to a ResolvedCheck.
-func resolveProfileCheckRef(ref preflightv1alpha1.ProfileCheckRef, profileName string, defaultInterval time.Duration) ResolvedCheck {
+func resolveProfileCheckRef(ref clustergatev1alpha1.ProfileCheckRef, profileName string, defaultInterval time.Duration) ResolvedCheck {
 	rc := ResolvedCheck{
 		Source:   "profile:" + profileName,
 		Interval: defaultInterval,
 	}
 
-	if ref.PreflightCheckRef != "" {
-		rc.Identifier = "dynamic:" + ref.PreflightCheckRef
+	if ref.GateCheckRef != "" {
+		rc.Identifier = "dynamic:" + ref.GateCheckRef
 		rc.IsBuiltin = false
-		rc.PreflightCheckName = ref.PreflightCheckRef
+		rc.GateCheckName = ref.GateCheckRef
 	} else {
 		rc.Identifier = ref.Name
 		rc.IsBuiltin = true
@@ -129,16 +129,16 @@ func resolveProfileCheckRef(ref preflightv1alpha1.ProfileCheckRef, profileName s
 }
 
 // resolveInlineCheck converts an inline CheckSpec to a ResolvedCheck.
-func resolveInlineCheck(cs preflightv1alpha1.CheckSpec, defaultInterval time.Duration) ResolvedCheck {
+func resolveInlineCheck(cs clustergatev1alpha1.CheckSpec, defaultInterval time.Duration) ResolvedCheck {
 	rc := ResolvedCheck{
 		Source:   "inline",
 		Interval: defaultInterval,
 	}
 
-	if cs.PreflightCheckRef != "" {
-		rc.Identifier = "dynamic:" + cs.PreflightCheckRef
+	if cs.GateCheckRef != "" {
+		rc.Identifier = "dynamic:" + cs.GateCheckRef
 		rc.IsBuiltin = false
-		rc.PreflightCheckName = cs.PreflightCheckRef
+		rc.GateCheckName = cs.GateCheckRef
 	} else {
 		rc.Identifier = cs.Name
 		rc.IsBuiltin = true
@@ -177,15 +177,15 @@ func mergeOverrides(base, override ResolvedCheck) ResolvedCheck {
 }
 
 // inlineIdentifier computes the identifier for an inline CheckSpec.
-func inlineIdentifier(cs preflightv1alpha1.CheckSpec) string {
-	if cs.PreflightCheckRef != "" {
-		return "dynamic:" + cs.PreflightCheckRef
+func inlineIdentifier(cs clustergatev1alpha1.CheckSpec) string {
+	if cs.GateCheckRef != "" {
+		return "dynamic:" + cs.GateCheckRef
 	}
 	return cs.Name
 }
 
 // ResolveSeverityAndCategory resolves final severity and category for a check,
-// falling back to checker defaults for built-ins or PreflightCheck defaults for dynamic.
+// falling back to checker defaults for built-ins or GateCheck defaults for dynamic.
 func ResolveSeverityAndCategory(rc ResolvedCheck, ctx context.Context, c client.Client) (string, string) {
 	sev := rc.Severity
 	cat := rc.Category
@@ -208,14 +208,14 @@ func ResolveSeverityAndCategory(rc ResolvedCheck, ctx context.Context, c client.
 			}
 		}
 	} else {
-		// For dynamic checks, fetch the PreflightCheck CR for defaults
-		var pc preflightv1alpha1.PreflightCheck
-		if err := c.Get(ctx, types.NamespacedName{Name: rc.PreflightCheckName}, &pc); err == nil {
+		// For dynamic checks, fetch the GateCheck CR for defaults
+		var gc clustergatev1alpha1.GateCheck
+		if err := c.Get(ctx, types.NamespacedName{Name: rc.GateCheckName}, &gc); err == nil {
 			if sev == "" {
-				sev = string(pc.Spec.Severity)
+				sev = string(gc.Spec.Severity)
 			}
 			if cat == "" {
-				cat = pc.Spec.Category
+				cat = gc.Spec.Category
 			}
 		}
 		if sev == "" {

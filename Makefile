@@ -1,4 +1,4 @@
-IMG ?= platform-preflight:latest
+IMG ?= clustergate:latest
 
 # Tool versions
 CONTROLLER_TOOLS_VERSION ?= v0.14.0
@@ -48,7 +48,7 @@ generate: controller-gen ## Generate DeepCopy methods.
 
 .PHONY: manifests
 manifests: controller-gen ## Generate CRD and RBAC manifests.
-	$(CONTROLLER_GEN) rbac:roleName=platform-preflight-controller crd \
+	$(CONTROLLER_GEN) rbac:roleName=clustergate-controller crd \
 		paths="./..." \
 		output:crd:artifacts:config=config/crd/bases \
 		output:rbac:dir=config/rbac
@@ -58,6 +58,13 @@ manifests: controller-gen ## Generate CRD and RBAC manifests.
 .PHONY: build
 build: generate fmt vet ## Build the manager binary.
 	go build -o bin/manager ./cmd/manager
+
+.PHONY: build-cli
+build-cli: fmt vet ## Build the clustergate CLI binary.
+	go build -o bin/clustergate ./cmd/clustergate
+
+.PHONY: build-all
+build-all: build build-cli ## Build both the manager and CLI binaries.
 
 .PHONY: run
 run: generate fmt vet ## Run the controller from your host.

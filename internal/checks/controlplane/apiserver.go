@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 
-	"github.com/camcast3/platform-preflight/internal/checks"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 const (

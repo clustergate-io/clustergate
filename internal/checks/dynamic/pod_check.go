@@ -9,11 +9,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
-func (e *Executor) executePodCheck(ctx context.Context, spec *preflightv1alpha1.PodCheckSpec) (checks.Result, error) {
+func (e *Executor) executePodCheck(ctx context.Context, spec *clustergatev1alpha1.PodCheckSpec) (checks.Result, error) {
 	selector, err := convertLabelSelector(spec.LabelSelector)
 	if err != nil {
 		return checks.Result{}, fmt.Errorf("invalid label selector: %w", err)

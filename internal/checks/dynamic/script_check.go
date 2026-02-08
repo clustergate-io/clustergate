@@ -12,21 +12,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 const (
 	defaultScriptTimeout = 30
 	scriptPollInterval   = 2 * time.Second
 	labelManagedBy       = "app.kubernetes.io/managed-by"
-	labelManagedByValue  = "platform-preflight"
-	labelCheckName       = "preflight.platform.io/check"
+	labelManagedByValue  = "clustergate"
+	labelCheckName       = "clustergate.io/check"
 )
 
 // executeScriptCheck deploys a Kubernetes Job, waits for completion, reads
 // the pod logs, and interprets the exit code.  Exit 0 → Ready, non-zero → not Ready.
-func executeScriptCheck(ctx context.Context, clientset kubernetes.Interface, namespace string, checkName string, spec *preflightv1alpha1.ScriptCheckSpec) (checks.Result, error) {
+func executeScriptCheck(ctx context.Context, clientset kubernetes.Interface, namespace string, checkName string, spec *clustergatev1alpha1.ScriptCheckSpec) (checks.Result, error) {
 	timeout := int64(defaultScriptTimeout)
 	if spec.TimeoutSeconds != nil {
 		timeout = int64(*spec.TimeoutSeconds)
@@ -35,7 +35,7 @@ func executeScriptCheck(ctx context.Context, clientset kubernetes.Interface, nam
 	var backoffLimit int32 = 0
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: fmt.Sprintf("preflight-%s-", checkName),
+			GenerateName: fmt.Sprintf("clustergate-%s-", checkName),
 			Namespace:    namespace,
 			Labels: map[string]string{
 				labelManagedBy: labelManagedByValue,

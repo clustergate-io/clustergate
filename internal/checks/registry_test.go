@@ -71,3 +71,44 @@ func TestRegisterDuplicatePanics(t *testing.T) {
 	// Register again with same name — should panic
 	Register(checker)
 }
+
+func TestAll(t *testing.T) {
+	Reset()
+	Register(&stubChecker{name: "all-a", severity: "critical", category: "test"})
+	Register(&stubChecker{name: "all-b", severity: "warning", category: "test"})
+
+	all := All()
+	if len(all) != 2 {
+		t.Fatalf("expected 2 checkers, got %d", len(all))
+	}
+
+	names := map[string]bool{}
+	for _, c := range all {
+		names[c.Name()] = true
+	}
+	if !names["all-a"] || !names["all-b"] {
+		t.Errorf("expected all-a and all-b, got %v", names)
+	}
+}
+
+func TestReset(t *testing.T) {
+	Reset()
+	Register(&stubChecker{name: "reset-test", severity: "critical", category: "test"})
+
+	if len(All()) != 1 {
+		t.Fatal("expected 1 checker before reset")
+	}
+
+	Reset()
+
+	if len(All()) != 0 {
+		t.Fatal("expected 0 checkers after reset")
+	}
+
+	// Should be able to re-register the same name after reset.
+	Register(&stubChecker{name: "reset-test", severity: "critical", category: "test"})
+	if len(All()) != 1 {
+		t.Fatal("expected 1 checker after re-registration")
+	}
+	Reset()
+}

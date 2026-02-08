@@ -10,13 +10,13 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func dnsTestScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(s))
-	utilruntime.Must(preflightv1alpha1.AddToScheme(s))
+	utilruntime.Must(clustergatev1alpha1.AddToScheme(s))
 	return s
 }
 

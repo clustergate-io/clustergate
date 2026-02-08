@@ -43,3 +43,22 @@ func List() []string {
 	}
 	return names
 }
+
+// All returns all registered Checkers.
+func All() []Checker {
+	registryMu.RLock()
+	defer registryMu.RUnlock()
+
+	all := make([]Checker, 0, len(registry))
+	for _, c := range registry {
+		all = append(all, c)
+	}
+	return all
+}
+
+// Reset clears the global registry. Intended for use in tests only.
+func Reset() {
+	registryMu.Lock()
+	defer registryMu.Unlock()
+	registry = make(map[string]Checker)
+}

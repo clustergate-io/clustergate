@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
-func (e *Executor) executeHTTPCheck(ctx context.Context, spec *preflightv1alpha1.HTTPCheckSpec) (checks.Result, error) {
+func (e *Executor) executeHTTPCheck(ctx context.Context, spec *clustergatev1alpha1.HTTPCheckSpec) (checks.Result, error) {
 	method := spec.Method
 	if method == "" {
 		method = http.MethodGet

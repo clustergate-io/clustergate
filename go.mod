@@ -1,4 +1,4 @@
-module github.com/camcast3/platform-preflight
+module github.com/clustergate/clustergate
 
 go 1.25.7
 

@@ -12,7 +12,7 @@ import (
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func TestTruncateLog(t *testing.T) {
@@ -76,7 +76,7 @@ func TestExecuteScriptCheck_JobCreation(t *testing.T) {
 		}
 
 		// Set a generate name so Get works
-		job.Name = "preflight-my-check-abc123"
+		job.Name = "clustergate-my-check-abc123"
 		jobCreated = true
 		return false, nil, nil
 	})
@@ -84,7 +84,7 @@ func TestExecuteScriptCheck_JobCreation(t *testing.T) {
 	// The Job will never complete since we're using a simple fake. The poll will timeout.
 	// We use a very short timeout to make the test fast.
 	timeoutSec := int32(1)
-	spec := &preflightv1alpha1.ScriptCheckSpec{
+	spec := &clustergatev1alpha1.ScriptCheckSpec{
 		Image:          "busybox:latest",
 		Command:        []string{"sh", "-c"},
 		Args:           []string{"echo hello"},
@@ -114,12 +114,12 @@ func TestExecuteScriptCheck_CustomTimeout(t *testing.T) {
 		createAction := action.(k8stesting.CreateAction)
 		job := createAction.GetObject().(*batchv1.Job)
 		capturedDeadline = *job.Spec.ActiveDeadlineSeconds
-		job.Name = "preflight-test-abc"
+		job.Name = "clustergate-test-abc"
 		return false, nil, nil
 	})
 
 	timeoutSec := int32(120)
-	spec := &preflightv1alpha1.ScriptCheckSpec{
+	spec := &clustergatev1alpha1.ScriptCheckSpec{
 		Image:          "alpine:latest",
 		Command:        []string{"true"},
 		TimeoutSeconds: &timeoutSec,
@@ -143,11 +143,11 @@ func TestExecuteScriptCheck_DefaultTimeout(t *testing.T) {
 		createAction := action.(k8stesting.CreateAction)
 		job := createAction.GetObject().(*batchv1.Job)
 		capturedDeadline = *job.Spec.ActiveDeadlineSeconds
-		job.Name = "preflight-test-abc"
+		job.Name = "clustergate-test-abc"
 		return false, nil, nil
 	})
 
-	spec := &preflightv1alpha1.ScriptCheckSpec{
+	spec := &clustergatev1alpha1.ScriptCheckSpec{
 		Image:   "alpine:latest",
 		Command: []string{"true"},
 		// No TimeoutSeconds — should default to 30
@@ -171,12 +171,12 @@ func TestExecuteScriptCheck_ServiceAccountName(t *testing.T) {
 		createAction := action.(k8stesting.CreateAction)
 		job := createAction.GetObject().(*batchv1.Job)
 		capturedSA = job.Spec.Template.Spec.ServiceAccountName
-		job.Name = "preflight-test-abc"
+		job.Name = "clustergate-test-abc"
 		return false, nil, nil
 	})
 
 	timeoutSec := int32(1)
-	spec := &preflightv1alpha1.ScriptCheckSpec{
+	spec := &clustergatev1alpha1.ScriptCheckSpec{
 		Image:              "alpine:latest",
 		Command:            []string{"true"},
 		TimeoutSeconds:     &timeoutSec,
@@ -201,12 +201,12 @@ func TestExecuteScriptCheck_EnvVars(t *testing.T) {
 		createAction := action.(k8stesting.CreateAction)
 		job := createAction.GetObject().(*batchv1.Job)
 		capturedEnv = job.Spec.Template.Spec.Containers[0].Env
-		job.Name = "preflight-test-abc"
+		job.Name = "clustergate-test-abc"
 		return false, nil, nil
 	})
 
 	timeoutSec := int32(1)
-	spec := &preflightv1alpha1.ScriptCheckSpec{
+	spec := &clustergatev1alpha1.ScriptCheckSpec{
 		Image:          "alpine:latest",
 		Command:        []string{"true"},
 		TimeoutSeconds: &timeoutSec,

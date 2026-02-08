@@ -1,3 +1,5 @@
+// +kubebuilder:object:generate=true
+// +groupName=clustergate.io
 package v1alpha1
 
 import (
@@ -7,7 +9,7 @@ import (
 
 var (
 	// GroupVersion is the API group and version for this package.
-	GroupVersion = schema.GroupVersion{Group: "preflight.platform.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "clustergate.io", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionResource scheme.
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
@@ -19,7 +21,7 @@ var (
 func init() {
 	SchemeBuilder.Register(
 		&ClusterReadiness{}, &ClusterReadinessList{},
-		&PreflightCheck{}, &PreflightCheckList{},
-		&PreflightProfile{}, &PreflightProfileList{},
+		&GateCheck{}, &GateCheckList{},
+		&GateProfile{}, &GateProfileList{},
 	)
 }

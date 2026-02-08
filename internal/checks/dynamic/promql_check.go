@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 // promQLResponse represents the Prometheus HTTP API response for instant queries.
@@ -31,7 +31,7 @@ type promQLSample struct {
 	Value  [2]interface{}    `json:"value"` // [timestamp, "value_string"]
 }
 
-func (e *Executor) executePromQLCheck(ctx context.Context, spec *preflightv1alpha1.PromQLCheckSpec) (checks.Result, error) {
+func (e *Executor) executePromQLCheck(ctx context.Context, spec *clustergatev1alpha1.PromQLCheckSpec) (checks.Result, error) {
 	timeout := 10 * time.Second
 	if spec.TimeoutSeconds != nil {
 		timeout = time.Duration(*spec.TimeoutSeconds) * time.Second

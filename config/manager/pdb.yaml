@@ -1,0 +1,14 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: clustergate-controller
+  namespace: clustergate-system
+  labels:
+    app.kubernetes.io/name: clustergate
+    app.kubernetes.io/component: controller
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: clustergate
+      app.kubernetes.io/component: controller

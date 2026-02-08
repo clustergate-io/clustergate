@@ -11,11 +11,11 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
-// Executor evaluates PreflightCheck specs at runtime.
+// Executor evaluates GateCheck specs at runtime.
 type Executor struct {
 	client     client.Client
 	httpClient *http.Client
@@ -41,9 +41,9 @@ func NewExecutor(c client.Client, cfg *rest.Config, namespace string) (*Executor
 	}, nil
 }
 
-// Execute runs the appropriate check type from a PreflightCheckSpec.
+// Execute runs the appropriate check type from a GateCheckSpec.
 // The checkName is used to label Jobs for ScriptCheck-based checks.
-func (e *Executor) Execute(ctx context.Context, checkName string, spec preflightv1alpha1.PreflightCheckSpec) (checks.Result, error) {
+func (e *Executor) Execute(ctx context.Context, checkName string, spec clustergatev1alpha1.GateCheckSpec) (checks.Result, error) {
 	switch {
 	case spec.PodCheck != nil:
 		return e.executePodCheck(ctx, spec.PodCheck)
@@ -56,7 +56,7 @@ func (e *Executor) Execute(ctx context.Context, checkName string, spec preflight
 	case spec.ScriptCheck != nil:
 		return executeScriptCheck(ctx, e.clientset, e.namespace, checkName, spec.ScriptCheck)
 	default:
-		return checks.Result{}, fmt.Errorf("no check type specified in PreflightCheck")
+		return checks.Result{}, fmt.Errorf("no check type specified in GateCheck")
 	}
 }
 

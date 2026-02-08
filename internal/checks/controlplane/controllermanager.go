@@ -6,7 +6,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/camcast3/platform-preflight/internal/checks"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 const ControllerManagerCheckName = "kube-controller-manager"

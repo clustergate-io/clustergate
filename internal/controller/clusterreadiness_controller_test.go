@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func TestAggregateCheck(t *testing.T) {
@@ -12,7 +12,7 @@ func TestAggregateCheck(t *testing.T) {
 		severity     string
 		category     string
 		ready        bool
-		wantSummary  preflightv1alpha1.ReadinessSummary
+		wantSummary  clustergatev1alpha1.ReadinessSummary
 		wantCatReady bool
 	}{
 		{
@@ -20,7 +20,7 @@ func TestAggregateCheck(t *testing.T) {
 			severity: "critical",
 			category: "networking",
 			ready:    true,
-			wantSummary: preflightv1alpha1.ReadinessSummary{
+			wantSummary: clustergatev1alpha1.ReadinessSummary{
 				Total: 1, Passing: 1, CriticalTotal: 1, CriticalPassing: 1,
 			},
 			wantCatReady: true,
@@ -30,7 +30,7 @@ func TestAggregateCheck(t *testing.T) {
 			severity: "critical",
 			category: "networking",
 			ready:    false,
-			wantSummary: preflightv1alpha1.ReadinessSummary{
+			wantSummary: clustergatev1alpha1.ReadinessSummary{
 				Total: 1, Failing: 1, CriticalTotal: 1,
 			},
 			wantCatReady: false,
@@ -40,7 +40,7 @@ func TestAggregateCheck(t *testing.T) {
 			severity: "warning",
 			category: "observability",
 			ready:    false,
-			wantSummary: preflightv1alpha1.ReadinessSummary{
+			wantSummary: clustergatev1alpha1.ReadinessSummary{
 				Total: 1, Failing: 1, WarningTotal: 1, WarningFailing: 1,
 			},
 			wantCatReady: true, // warning doesn't block category
@@ -50,7 +50,7 @@ func TestAggregateCheck(t *testing.T) {
 			severity: "warning",
 			category: "observability",
 			ready:    true,
-			wantSummary: preflightv1alpha1.ReadinessSummary{
+			wantSummary: clustergatev1alpha1.ReadinessSummary{
 				Total: 1, Passing: 1, WarningTotal: 1,
 			},
 			wantCatReady: true,
@@ -60,7 +60,7 @@ func TestAggregateCheck(t *testing.T) {
 			severity: "info",
 			category: "diagnostics",
 			ready:    true,
-			wantSummary: preflightv1alpha1.ReadinessSummary{
+			wantSummary: clustergatev1alpha1.ReadinessSummary{
 				Total: 1, Passing: 1,
 			},
 			wantCatReady: true,
@@ -69,7 +69,7 @@ func TestAggregateCheck(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			summary := &preflightv1alpha1.ReadinessSummary{}
+			summary := &clustergatev1alpha1.ReadinessSummary{}
 			categoryMap := make(map[string]*categoryAgg)
 
 			aggregateCheck(summary, categoryMap, tt.severity, tt.category, tt.ready)
@@ -108,7 +108,7 @@ func TestAggregateCheck(t *testing.T) {
 }
 
 func TestAggregateCheck_MultipleCalls(t *testing.T) {
-	summary := &preflightv1alpha1.ReadinessSummary{}
+	summary := &clustergatev1alpha1.ReadinessSummary{}
 	categoryMap := make(map[string]*categoryAgg)
 
 	// First: critical passing in networking

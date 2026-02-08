@@ -6,7 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func TestCheckSchedule(t *testing.T) {
@@ -16,7 +16,7 @@ func TestCheckSchedule(t *testing.T) {
 	tests := []struct {
 		name             string
 		resolved         []ResolvedCheck
-		existingStatuses []preflightv1alpha1.CheckStatus
+		existingStatuses []clustergatev1alpha1.CheckStatus
 		wantDueCount     int
 		wantCarriedCount int
 		wantRequeue      time.Duration
@@ -38,7 +38,7 @@ func TestCheckSchedule(t *testing.T) {
 				{Identifier: "dns", Interval: interval},
 				{Identifier: "dynamic:ingress", Interval: interval},
 			},
-			existingStatuses: []preflightv1alpha1.CheckStatus{
+			existingStatuses: []clustergatev1alpha1.CheckStatus{
 				{Name: "dns", LastChecked: timePtr(now.Add(-2 * time.Minute))},
 				{Name: "dynamic:ingress", LastChecked: timePtr(now.Add(-5 * time.Minute))},
 			},
@@ -52,7 +52,7 @@ func TestCheckSchedule(t *testing.T) {
 				{Identifier: "dns", Interval: interval},
 				{Identifier: "dynamic:ingress", Interval: 2 * time.Minute},
 			},
-			existingStatuses: []preflightv1alpha1.CheckStatus{
+			existingStatuses: []clustergatev1alpha1.CheckStatus{
 				{Name: "dns", LastChecked: timePtr(now.Add(-30 * time.Second))},
 				{Name: "dynamic:ingress", LastChecked: timePtr(now.Add(-30 * time.Second))},
 			},
@@ -66,7 +66,7 @@ func TestCheckSchedule(t *testing.T) {
 				{Identifier: "dns", Interval: interval},
 				{Identifier: "dynamic:ingress", Interval: 5 * time.Minute},
 			},
-			existingStatuses: []preflightv1alpha1.CheckStatus{
+			existingStatuses: []clustergatev1alpha1.CheckStatus{
 				{Name: "dns", LastChecked: timePtr(now.Add(-2 * time.Minute))},              // stale
 				{Name: "dynamic:ingress", LastChecked: timePtr(now.Add(-30 * time.Second))}, // fresh (4m30s remaining)
 			},
@@ -87,7 +87,7 @@ func TestCheckSchedule(t *testing.T) {
 			resolved: []ResolvedCheck{
 				{Identifier: "dns", Interval: interval},
 			},
-			existingStatuses: []preflightv1alpha1.CheckStatus{
+			existingStatuses: []clustergatev1alpha1.CheckStatus{
 				{Name: "dns", LastChecked: timePtr(now.Add(-interval))},
 			},
 			wantDueCount:     1,
@@ -99,7 +99,7 @@ func TestCheckSchedule(t *testing.T) {
 			resolved: []ResolvedCheck{
 				{Identifier: "dns", Interval: interval},
 			},
-			existingStatuses: []preflightv1alpha1.CheckStatus{
+			existingStatuses: []clustergatev1alpha1.CheckStatus{
 				{Name: "dns", LastChecked: nil},
 			},
 			wantDueCount:     1,
@@ -112,7 +112,7 @@ func TestCheckSchedule(t *testing.T) {
 				{Identifier: "dns", Interval: 2 * time.Minute},
 				{Identifier: "dynamic:ingress", Interval: 5 * time.Minute},
 			},
-			existingStatuses: []preflightv1alpha1.CheckStatus{
+			existingStatuses: []clustergatev1alpha1.CheckStatus{
 				{Name: "dns", LastChecked: timePtr(now.Add(-time.Minute))},             // 1m remaining
 				{Name: "dynamic:ingress", LastChecked: timePtr(now.Add(-time.Minute))}, // 4m remaining
 			},
@@ -146,11 +146,11 @@ func TestCheckScheduleCarriedStatusIntegrity(t *testing.T) {
 	resolved := []ResolvedCheck{
 		{Identifier: "dns", Interval: 60 * time.Second},
 	}
-	existing := []preflightv1alpha1.CheckStatus{
+	existing := []clustergatev1alpha1.CheckStatus{
 		{
 			Name:        "dns",
 			Ready:       true,
-			Severity:    preflightv1alpha1.SeverityCritical,
+			Severity:    clustergatev1alpha1.SeverityCritical,
 			Category:    "networking",
 			Message:     "DNS operational",
 			LastChecked: timePtr(lastChecked),
@@ -170,8 +170,8 @@ func TestCheckScheduleCarriedStatusIntegrity(t *testing.T) {
 	if cs.Ready != true {
 		t.Errorf("carried ready = %v, want true", cs.Ready)
 	}
-	if cs.Severity != preflightv1alpha1.SeverityCritical {
-		t.Errorf("carried severity = %q, want %q", cs.Severity, preflightv1alpha1.SeverityCritical)
+	if cs.Severity != clustergatev1alpha1.SeverityCritical {
+		t.Errorf("carried severity = %q, want %q", cs.Severity, clustergatev1alpha1.SeverityCritical)
 	}
 	if cs.Category != "networking" {
 		t.Errorf("carried category = %q, want %q", cs.Category, "networking")

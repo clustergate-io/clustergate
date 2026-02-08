@@ -46,10 +46,10 @@ func TestProfileCheckRefIsEnabled(t *testing.T) {
 
 func TestProfileCheckRefIdentifier(t *testing.T) {
 	tests := []struct {
-		name              string
-		refName           string
-		preflightCheckRef string
-		want              string
+		name         string
+		refName      string
+		gateCheckRef string
+		want         string
 	}{
 		{"builtin by name", "dns", "", "dns"},
 		{"dynamic by ref", "", "ingress-controller-ready", "dynamic:ingress-controller-ready"},
@@ -58,8 +58,8 @@ func TestProfileCheckRefIdentifier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ref := ProfileCheckRef{
-				Name:              tt.refName,
-				PreflightCheckRef: tt.preflightCheckRef,
+				Name:         tt.refName,
+				GateCheckRef: tt.gateCheckRef,
 			}
 			if got := ref.Identifier(); got != tt.want {
 				t.Errorf("ProfileCheckRef.Identifier() = %q, want %q", got, tt.want)

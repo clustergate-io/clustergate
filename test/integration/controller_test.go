@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 // ---------------------------------------------------------------------------
@@ -15,14 +15,14 @@ import (
 // ---------------------------------------------------------------------------
 
 func TestCRD_RejectsInvalidSeverityEnum(t *testing.T) {
-	pc := &preflightv1alpha1.PreflightCheck{
+	pc := &clustergatev1alpha1.GateCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-invalid-severity",
 		},
-		Spec: preflightv1alpha1.PreflightCheckSpec{
-			Severity: preflightv1alpha1.Severity("banana"), // invalid enum
+		Spec: clustergatev1alpha1.GateCheckSpec{
+			Severity: clustergatev1alpha1.Severity("banana"), // invalid enum
 			Category: "test",
-			PodCheck: &preflightv1alpha1.PodCheckSpec{
+			PodCheck: &clustergatev1alpha1.PodCheckSpec{
 				Namespace:     "default",
 				LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "test"}},
 				MinReady:      1,
@@ -42,16 +42,16 @@ func TestCRD_RejectsInvalidSeverityEnum(t *testing.T) {
 	}
 }
 
-func TestCRD_PreflightCheckCreation(t *testing.T) {
-	pc := &preflightv1alpha1.PreflightCheck{
+func TestCRD_GateCheckCreation(t *testing.T) {
+	pc := &clustergatev1alpha1.GateCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-pod-check",
 		},
-		Spec: preflightv1alpha1.PreflightCheckSpec{
-			Severity:    preflightv1alpha1.SeverityCritical,
+		Spec: clustergatev1alpha1.GateCheckSpec{
+			Severity:    clustergatev1alpha1.SeverityCritical,
 			Category:    "test",
 			Description: "Test pod check for integration tests",
-			PodCheck: &preflightv1alpha1.PodCheckSpec{
+			PodCheck: &clustergatev1alpha1.PodCheckSpec{
 				Namespace:     "default",
 				LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "test"}},
 				MinReady:      1,
@@ -59,45 +59,45 @@ func TestCRD_PreflightCheckCreation(t *testing.T) {
 		},
 	}
 	if err := k8sClient.Create(ctx, pc); err != nil {
-		t.Fatalf("failed to create PreflightCheck: %v", err)
+		t.Fatalf("failed to create GateCheck: %v", err)
 	}
 	defer k8sClient.Delete(ctx, pc)
 
 	// Verify it can be fetched back.
-	fetched := &preflightv1alpha1.PreflightCheck{}
+	fetched := &clustergatev1alpha1.GateCheck{}
 	if err := k8sClient.Get(ctx, keyFor(pc), fetched); err != nil {
-		t.Fatalf("failed to fetch PreflightCheck: %v", err)
+		t.Fatalf("failed to fetch GateCheck: %v", err)
 	}
 	if fetched.Spec.Category != "test" {
 		t.Errorf("Category = %q, want %q", fetched.Spec.Category, "test")
 	}
-	if fetched.Spec.Severity != preflightv1alpha1.SeverityCritical {
-		t.Errorf("Severity = %q, want %q", fetched.Spec.Severity, preflightv1alpha1.SeverityCritical)
+	if fetched.Spec.Severity != clustergatev1alpha1.SeverityCritical {
+		t.Errorf("Severity = %q, want %q", fetched.Spec.Severity, clustergatev1alpha1.SeverityCritical)
 	}
 }
 
-func TestCRD_PreflightCheckWithHTTPCheck(t *testing.T) {
-	pc := &preflightv1alpha1.PreflightCheck{
+func TestCRD_GateCheckWithHTTPCheck(t *testing.T) {
+	pc := &clustergatev1alpha1.GateCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-http-check",
 		},
-		Spec: preflightv1alpha1.PreflightCheckSpec{
-			Severity: preflightv1alpha1.SeverityWarning,
+		Spec: clustergatev1alpha1.GateCheckSpec{
+			Severity: clustergatev1alpha1.SeverityWarning,
 			Category: "networking",
-			HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+			HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 				URL:    "https://example.com/healthz",
 				Method: "GET",
 			},
 		},
 	}
 	if err := k8sClient.Create(ctx, pc); err != nil {
-		t.Fatalf("failed to create PreflightCheck with HTTPCheck: %v", err)
+		t.Fatalf("failed to create GateCheck with HTTPCheck: %v", err)
 	}
 	defer k8sClient.Delete(ctx, pc)
 
-	fetched := &preflightv1alpha1.PreflightCheck{}
+	fetched := &clustergatev1alpha1.GateCheck{}
 	if err := k8sClient.Get(ctx, keyFor(pc), fetched); err != nil {
-		t.Fatalf("failed to fetch PreflightCheck: %v", err)
+		t.Fatalf("failed to fetch GateCheck: %v", err)
 	}
 	if fetched.Spec.HTTPCheck == nil {
 		t.Fatal("expected HTTPCheck to be set")
@@ -107,15 +107,15 @@ func TestCRD_PreflightCheckWithHTTPCheck(t *testing.T) {
 	}
 }
 
-func TestCRD_PreflightCheckNoType_Creates(t *testing.T) {
-	// A PreflightCheck with no check type specified should still be accepted
+func TestCRD_GateCheckNoType_Creates(t *testing.T) {
+	// A GateCheck with no check type specified should still be accepted
 	// by the CRD (validation is done by the reconciler, not the schema).
-	pc := &preflightv1alpha1.PreflightCheck{
+	pc := &clustergatev1alpha1.GateCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-no-type-check",
 		},
-		Spec: preflightv1alpha1.PreflightCheckSpec{
-			Severity:    preflightv1alpha1.SeverityCritical,
+		Spec: clustergatev1alpha1.GateCheckSpec{
+			Severity:    clustergatev1alpha1.SeverityCritical,
 			Category:    "test",
 			Description: "Check with no type — should be accepted by CRD but marked invalid by reconciler",
 		},
@@ -127,38 +127,38 @@ func TestCRD_PreflightCheckNoType_Creates(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// PreflightProfile CRD Tests
+// GateProfile CRD Tests
 // ---------------------------------------------------------------------------
 
-func TestCRD_PreflightProfileCreation(t *testing.T) {
-	profile := &preflightv1alpha1.PreflightProfile{
+func TestCRD_GateProfileCreation(t *testing.T) {
+	profile := &clustergatev1alpha1.GateProfile{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-profile",
 		},
-		Spec: preflightv1alpha1.PreflightProfileSpec{
+		Spec: clustergatev1alpha1.GateProfileSpec{
 			Description: "Integration test profile",
-			Checks: []preflightv1alpha1.ProfileCheckRef{
+			Checks: []clustergatev1alpha1.ProfileCheckRef{
 				{
 					Name:     "kube-apiserver",
-					Severity: severityPtr(preflightv1alpha1.SeverityCritical),
+					Severity: severityPtr(clustergatev1alpha1.SeverityCritical),
 					Category: "control-plane",
 				},
 				{
 					Name:     "dns",
-					Severity: severityPtr(preflightv1alpha1.SeverityCritical),
+					Severity: severityPtr(clustergatev1alpha1.SeverityCritical),
 					Category: "networking",
 				},
 			},
 		},
 	}
 	if err := k8sClient.Create(ctx, profile); err != nil {
-		t.Fatalf("failed to create PreflightProfile: %v", err)
+		t.Fatalf("failed to create GateProfile: %v", err)
 	}
 	defer k8sClient.Delete(ctx, profile)
 
-	fetched := &preflightv1alpha1.PreflightProfile{}
+	fetched := &clustergatev1alpha1.GateProfile{}
 	if err := k8sClient.Get(ctx, keyFor(profile), fetched); err != nil {
-		t.Fatalf("failed to fetch PreflightProfile: %v", err)
+		t.Fatalf("failed to fetch GateProfile: %v", err)
 	}
 	if len(fetched.Spec.Checks) != 2 {
 		t.Errorf("expected 2 checks, got %d", len(fetched.Spec.Checks))
@@ -170,20 +170,20 @@ func TestCRD_PreflightProfileCreation(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCRD_ClusterReadinessCreation(t *testing.T) {
-	cr := &preflightv1alpha1.ClusterReadiness{
+	cr := &clustergatev1alpha1.ClusterReadiness{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-readiness",
 		},
-		Spec: preflightv1alpha1.ClusterReadinessSpec{
-			Checks: []preflightv1alpha1.CheckSpec{
+		Spec: clustergatev1alpha1.ClusterReadinessSpec{
+			Checks: []clustergatev1alpha1.CheckSpec{
 				{
 					Name:     "kube-apiserver",
-					Severity: severityPtr(preflightv1alpha1.SeverityCritical),
+					Severity: severityPtr(clustergatev1alpha1.SeverityCritical),
 					Category: "control-plane",
 				},
 				{
 					Name:     "etcd",
-					Severity: severityPtr(preflightv1alpha1.SeverityCritical),
+					Severity: severityPtr(clustergatev1alpha1.SeverityCritical),
 					Category: "control-plane",
 				},
 			},
@@ -194,7 +194,7 @@ func TestCRD_ClusterReadinessCreation(t *testing.T) {
 	}
 	defer k8sClient.Delete(ctx, cr)
 
-	fetched := &preflightv1alpha1.ClusterReadiness{}
+	fetched := &clustergatev1alpha1.ClusterReadiness{}
 	if err := k8sClient.Get(ctx, keyFor(fetched), fetched); err != nil {
 		// Use the key from the original object
 		if err := k8sClient.Get(ctx, keyFor(cr), fetched); err != nil {
@@ -207,18 +207,18 @@ func TestCRD_ClusterReadinessCreation(t *testing.T) {
 }
 
 func TestCRD_ClusterReadinessWithProfile(t *testing.T) {
-	cr := &preflightv1alpha1.ClusterReadiness{
+	cr := &clustergatev1alpha1.ClusterReadiness{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-readiness-with-profiles",
 		},
-		Spec: preflightv1alpha1.ClusterReadinessSpec{
-			Profiles: []preflightv1alpha1.ProfileRef{
+		Spec: clustergatev1alpha1.ClusterReadinessSpec{
+			Profiles: []clustergatev1alpha1.ProfileRef{
 				{Name: "production-baseline"},
 			},
-			Checks: []preflightv1alpha1.CheckSpec{
+			Checks: []clustergatev1alpha1.CheckSpec{
 				{
 					Name:     "kube-apiserver",
-					Severity: severityPtr(preflightv1alpha1.SeverityCritical),
+					Severity: severityPtr(clustergatev1alpha1.SeverityCritical),
 					Category: "control-plane",
 				},
 			},
@@ -229,7 +229,7 @@ func TestCRD_ClusterReadinessWithProfile(t *testing.T) {
 	}
 	defer k8sClient.Delete(ctx, cr)
 
-	fetched := &preflightv1alpha1.ClusterReadiness{}
+	fetched := &clustergatev1alpha1.ClusterReadiness{}
 	if err := k8sClient.Get(ctx, keyFor(cr), fetched); err != nil {
 		t.Fatalf("failed to fetch ClusterReadiness: %v", err)
 	}
@@ -239,15 +239,15 @@ func TestCRD_ClusterReadinessWithProfile(t *testing.T) {
 }
 
 func TestCRD_ClusterReadinessDelete(t *testing.T) {
-	cr := &preflightv1alpha1.ClusterReadiness{
+	cr := &clustergatev1alpha1.ClusterReadiness{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-readiness-delete",
 		},
-		Spec: preflightv1alpha1.ClusterReadinessSpec{
-			Checks: []preflightv1alpha1.CheckSpec{
+		Spec: clustergatev1alpha1.ClusterReadinessSpec{
+			Checks: []clustergatev1alpha1.CheckSpec{
 				{
 					Name:     "dns",
-					Severity: severityPtr(preflightv1alpha1.SeverityCritical),
+					Severity: severityPtr(clustergatev1alpha1.SeverityCritical),
 					Category: "networking",
 				},
 			},
@@ -262,7 +262,7 @@ func TestCRD_ClusterReadinessDelete(t *testing.T) {
 	}
 
 	// Verify deletion
-	fetched := &preflightv1alpha1.ClusterReadiness{}
+	fetched := &clustergatev1alpha1.ClusterReadiness{}
 	err := k8sClient.Get(ctx, keyFor(cr), fetched)
 	if err == nil {
 		t.Fatal("expected NotFound error after deletion, but resource still exists")
@@ -283,6 +283,6 @@ func keyFor(obj metav1.Object) client.ObjectKey {
 	}
 }
 
-func severityPtr(s preflightv1alpha1.Severity) *preflightv1alpha1.Severity {
+func severityPtr(s clustergatev1alpha1.Severity) *clustergatev1alpha1.Severity {
 	return &s
 }

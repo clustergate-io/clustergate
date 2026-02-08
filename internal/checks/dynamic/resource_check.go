@@ -11,11 +11,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
-func (e *Executor) executeResourceCheck(ctx context.Context, spec *preflightv1alpha1.ResourceCheckSpec) (checks.Result, error) {
+func (e *Executor) executeResourceCheck(ctx context.Context, spec *clustergatev1alpha1.ResourceCheckSpec) (checks.Result, error) {
 	gv, err := schema.ParseGroupVersion(spec.APIVersion)
 	if err != nil {
 		return checks.Result{

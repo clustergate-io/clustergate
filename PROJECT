@@ -1,7 +1,7 @@
 version: "3"
-domain: platform.io
-repo: github.com/camcast3/platform-preflight
-projectName: platform-preflight
+domain: clustergate.io
+repo: github.com/clustergate/clustergate
+projectName: clustergate
 layout:
   - go.kubebuilder.io/v4
 resources:
@@ -9,23 +9,23 @@ resources:
       crdVersion: v1
       namespaced: false
     controller: true
-    group: preflight
+    group: ""
     kind: ClusterReadiness
-    path: github.com/camcast3/platform-preflight/api/v1alpha1
+    path: github.com/clustergate/clustergate/api/v1alpha1
     version: v1alpha1
   - api:
       crdVersion: v1
       namespaced: false
     controller: true
-    group: preflight
-    kind: PreflightCheck
-    path: github.com/camcast3/platform-preflight/api/v1alpha1
+    group: ""
+    kind: GateCheck
+    path: github.com/clustergate/clustergate/api/v1alpha1
     version: v1alpha1
   - api:
       crdVersion: v1
       namespaced: false
     controller: true
-    group: preflight
-    kind: PreflightProfile
-    path: github.com/camcast3/platform-preflight/api/v1alpha1
+    group: ""
+    kind: GateProfile
+    path: github.com/clustergate/clustergate/api/v1alpha1
     version: v1alpha1

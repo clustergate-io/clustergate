@@ -12,22 +12,22 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 func testScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(s))
-	utilruntime.Must(preflightv1alpha1.AddToScheme(s))
+	utilruntime.Must(clustergatev1alpha1.AddToScheme(s))
 	return s
 }
 
 func TestResolveChecks_InlineBuiltin(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(testScheme()).Build()
 
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Checks: []preflightv1alpha1.CheckSpec{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Checks: []clustergatev1alpha1.CheckSpec{
 			{Name: "dns"},
 		},
 	}
@@ -56,9 +56,9 @@ func TestResolveChecks_InlineBuiltin(t *testing.T) {
 func TestResolveChecks_InlineDynamic(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(testScheme()).Build()
 
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Checks: []preflightv1alpha1.CheckSpec{
-			{PreflightCheckRef: "ingress-controller-ready"},
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Checks: []clustergatev1alpha1.CheckSpec{
+			{GateCheckRef: "ingress-controller-ready"},
 		},
 	}
 
@@ -80,9 +80,9 @@ func TestResolveChecks_InlineDynamic(t *testing.T) {
 func TestResolveChecks_InlineWithOverrides(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(testScheme()).Build()
 
-	sev := preflightv1alpha1.SeverityWarning
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Checks: []preflightv1alpha1.CheckSpec{
+	sev := clustergatev1alpha1.SeverityWarning
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Checks: []clustergatev1alpha1.CheckSpec{
 			{
 				Name:     "dns",
 				Severity: &sev,
@@ -115,8 +115,8 @@ func TestResolveChecks_DisabledInlineExcluded(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(testScheme()).Build()
 
 	enabled := false
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Checks: []preflightv1alpha1.CheckSpec{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Checks: []clustergatev1alpha1.CheckSpec{
 			{Name: "dns", Enabled: &enabled},
 		},
 	}
@@ -131,12 +131,12 @@ func TestResolveChecks_DisabledInlineExcluded(t *testing.T) {
 }
 
 func TestResolveChecks_ProfileResolution(t *testing.T) {
-	profile := &preflightv1alpha1.PreflightProfile{
+	profile := &clustergatev1alpha1.GateProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "prod-baseline"},
-		Spec: preflightv1alpha1.PreflightProfileSpec{
-			Checks: []preflightv1alpha1.ProfileCheckRef{
+		Spec: clustergatev1alpha1.GateProfileSpec{
+			Checks: []clustergatev1alpha1.ProfileCheckRef{
 				{Name: "dns"},
-				{PreflightCheckRef: "ingress-controller-ready"},
+				{GateCheckRef: "ingress-controller-ready"},
 			},
 		},
 	}
@@ -146,8 +146,8 @@ func TestResolveChecks_ProfileResolution(t *testing.T) {
 		WithObjects(profile).
 		Build()
 
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Profiles: []preflightv1alpha1.ProfileRef{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Profiles: []clustergatev1alpha1.ProfileRef{
 			{Name: "prod-baseline"},
 		},
 	}
@@ -170,12 +170,12 @@ func TestResolveChecks_ProfileResolution(t *testing.T) {
 
 func TestResolveChecks_ProfileDisabledExcluded(t *testing.T) {
 	disabled := false
-	profile := &preflightv1alpha1.PreflightProfile{
+	profile := &clustergatev1alpha1.GateProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-profile"},
-		Spec: preflightv1alpha1.PreflightProfileSpec{
-			Checks: []preflightv1alpha1.ProfileCheckRef{
+		Spec: clustergatev1alpha1.GateProfileSpec{
+			Checks: []clustergatev1alpha1.ProfileCheckRef{
 				{Name: "dns"},
-				{PreflightCheckRef: "ingress", Enabled: &disabled},
+				{GateCheckRef: "ingress", Enabled: &disabled},
 			},
 		},
 	}
@@ -185,8 +185,8 @@ func TestResolveChecks_ProfileDisabledExcluded(t *testing.T) {
 		WithObjects(profile).
 		Build()
 
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Profiles: []preflightv1alpha1.ProfileRef{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Profiles: []clustergatev1alpha1.ProfileRef{
 			{Name: "test-profile"},
 		},
 	}
@@ -204,21 +204,21 @@ func TestResolveChecks_ProfileDisabledExcluded(t *testing.T) {
 }
 
 func TestResolveChecks_LaterProfileOverridesEarlier(t *testing.T) {
-	sevWarning := preflightv1alpha1.SeverityWarning
-	sevCritical := preflightv1alpha1.SeverityCritical
+	sevWarning := clustergatev1alpha1.SeverityWarning
+	sevCritical := clustergatev1alpha1.SeverityCritical
 
-	profile1 := &preflightv1alpha1.PreflightProfile{
+	profile1 := &clustergatev1alpha1.GateProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "profile-a"},
-		Spec: preflightv1alpha1.PreflightProfileSpec{
-			Checks: []preflightv1alpha1.ProfileCheckRef{
+		Spec: clustergatev1alpha1.GateProfileSpec{
+			Checks: []clustergatev1alpha1.ProfileCheckRef{
 				{Name: "dns", Severity: &sevWarning},
 			},
 		},
 	}
-	profile2 := &preflightv1alpha1.PreflightProfile{
+	profile2 := &clustergatev1alpha1.GateProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "profile-b"},
-		Spec: preflightv1alpha1.PreflightProfileSpec{
-			Checks: []preflightv1alpha1.ProfileCheckRef{
+		Spec: clustergatev1alpha1.GateProfileSpec{
+			Checks: []clustergatev1alpha1.ProfileCheckRef{
 				{Name: "dns", Severity: &sevCritical},
 			},
 		},
@@ -229,8 +229,8 @@ func TestResolveChecks_LaterProfileOverridesEarlier(t *testing.T) {
 		WithObjects(profile1, profile2).
 		Build()
 
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Profiles: []preflightv1alpha1.ProfileRef{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Profiles: []clustergatev1alpha1.ProfileRef{
 			{Name: "profile-a"},
 			{Name: "profile-b"},
 		},
@@ -252,13 +252,13 @@ func TestResolveChecks_LaterProfileOverridesEarlier(t *testing.T) {
 }
 
 func TestResolveChecks_InlineOverridesProfile(t *testing.T) {
-	sevCritical := preflightv1alpha1.SeverityCritical
-	sevWarning := preflightv1alpha1.SeverityWarning
+	sevCritical := clustergatev1alpha1.SeverityCritical
+	sevWarning := clustergatev1alpha1.SeverityWarning
 
-	profile := &preflightv1alpha1.PreflightProfile{
+	profile := &clustergatev1alpha1.GateProfile{
 		ObjectMeta: metav1.ObjectMeta{Name: "base-profile"},
-		Spec: preflightv1alpha1.PreflightProfileSpec{
-			Checks: []preflightv1alpha1.ProfileCheckRef{
+		Spec: clustergatev1alpha1.GateProfileSpec{
+			Checks: []clustergatev1alpha1.ProfileCheckRef{
 				{Name: "dns", Severity: &sevCritical, Category: "networking"},
 			},
 		},
@@ -270,11 +270,11 @@ func TestResolveChecks_InlineOverridesProfile(t *testing.T) {
 		Build()
 
 	// Inline overrides severity but not category
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Profiles: []preflightv1alpha1.ProfileRef{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Profiles: []clustergatev1alpha1.ProfileRef{
 			{Name: "base-profile"},
 		},
-		Checks: []preflightv1alpha1.CheckSpec{
+		Checks: []clustergatev1alpha1.CheckSpec{
 			{Name: "dns", Severity: &sevWarning},
 		},
 	}
@@ -298,8 +298,8 @@ func TestResolveChecks_InlineOverridesProfile(t *testing.T) {
 func TestResolveChecks_ProfileNotFound(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(testScheme()).Build()
 
-	spec := preflightv1alpha1.ClusterReadinessSpec{
-		Profiles: []preflightv1alpha1.ProfileRef{
+	spec := clustergatev1alpha1.ClusterReadinessSpec{
+		Profiles: []clustergatev1alpha1.ProfileRef{
 			{Name: "does-not-exist"},
 		},
 	}
@@ -357,10 +357,10 @@ func TestResolveSeverityAndCategory_BuiltinNotRegistered(t *testing.T) {
 }
 
 func TestResolveSeverityAndCategory_DynamicFromCR(t *testing.T) {
-	pc := &preflightv1alpha1.PreflightCheck{
+	pc := &clustergatev1alpha1.GateCheck{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-check"},
-		Spec: preflightv1alpha1.PreflightCheckSpec{
-			Severity: preflightv1alpha1.SeverityWarning,
+		Spec: clustergatev1alpha1.GateCheckSpec{
+			Severity: clustergatev1alpha1.SeverityWarning,
 			Category: "security",
 		},
 	}
@@ -370,8 +370,8 @@ func TestResolveSeverityAndCategory_DynamicFromCR(t *testing.T) {
 		Build()
 
 	rc := ResolvedCheck{
-		IsBuiltin:          false,
-		PreflightCheckName: "my-check",
+		IsBuiltin:     false,
+		GateCheckName: "my-check",
 	}
 
 	sev, cat := ResolveSeverityAndCategory(rc, context.Background(), c)
@@ -387,8 +387,8 @@ func TestResolveSeverityAndCategory_DynamicCRNotFound(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(testScheme()).Build()
 
 	rc := ResolvedCheck{
-		IsBuiltin:          false,
-		PreflightCheckName: "missing-check",
+		IsBuiltin:     false,
+		GateCheckName: "missing-check",
 	}
 
 	sev, cat := ResolveSeverityAndCategory(rc, context.Background(), c)

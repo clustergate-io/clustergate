@@ -9,7 +9,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func TestHTTPCheck_Returns200(t *testing.T) {
@@ -20,8 +20,8 @@ func TestHTTPCheck_Returns200(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 			URL: srv.URL,
 		},
 	})
@@ -42,8 +42,8 @@ func TestHTTPCheck_Returns500(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 			URL: srv.URL,
 		},
 	})
@@ -64,8 +64,8 @@ func TestHTTPCheck_CustomExpectedCodes(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 			URL:                 srv.URL,
 			ExpectedStatusCodes: []int{200, 201},
 		},
@@ -89,8 +89,8 @@ func TestHTTPCheck_CustomHeaders(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	_, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+	_, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 			URL:     srv.URL,
 			Headers: map[string]string{"Authorization": "Bearer token123"},
 		},
@@ -114,8 +114,8 @@ func TestHTTPCheck_DefaultMethodIsGET(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	_, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+	_, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 			URL: srv.URL,
 		},
 	})
@@ -131,8 +131,8 @@ func TestHTTPCheck_DefaultMethodIsGET(t *testing.T) {
 func TestHTTPCheck_InvalidURL(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		HTTPCheck: &preflightv1alpha1.HTTPCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		HTTPCheck: &clustergatev1alpha1.HTTPCheckSpec{
 			URL: "://not-a-valid-url",
 		},
 	})
@@ -172,11 +172,11 @@ func TestPromQLCheck_ResultCountPassing(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    `up{job="etcd"} == 1`,
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "resultCount",
 				Operator:  "gte",
 				Threshold: 3,
@@ -208,11 +208,11 @@ func TestPromQLCheck_ResultCountFailing(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "up == 1",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "resultCount",
 				Operator:  "gte",
 				Threshold: 3,
@@ -244,11 +244,11 @@ func TestPromQLCheck_ValuePassing(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "error_rate",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "value",
 				Operator:  "lt",
 				Threshold: 0.01,
@@ -280,11 +280,11 @@ func TestPromQLCheck_ValueFailing(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "error_rate",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "value",
 				Operator:  "lt",
 				Threshold: 0.01,
@@ -313,11 +313,11 @@ func TestPromQLCheck_NoResults(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "up",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "value",
 				Operator:  "gte",
 				Threshold: 1,
@@ -339,11 +339,11 @@ func TestPromQLCheck_PrometheusHTTPError(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "up",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "resultCount",
 				Operator:  "gte",
 				Threshold: 1,
@@ -370,11 +370,11 @@ func TestPromQLCheck_PrometheusQueryError(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "invalid{",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "resultCount",
 				Operator:  "gte",
 				Threshold: 1,
@@ -405,11 +405,11 @@ func TestPromQLCheck_UnknownConditionType(t *testing.T) {
 
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PromQLCheck: &preflightv1alpha1.PromQLCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PromQLCheck: &clustergatev1alpha1.PromQLCheckSpec{
 			Endpoint: srv.URL,
 			Query:    "up",
-			Condition: preflightv1alpha1.PromQLCondition{
+			Condition: clustergatev1alpha1.PromQLCondition{
 				Type:      "invalid_type",
 				Operator:  "gte",
 				Threshold: 1,
@@ -428,7 +428,7 @@ func TestPromQLCheck_UnknownConditionType(t *testing.T) {
 func TestExecutor_NoCheckType(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 	executor := newTestExecutor(c)
-	_, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{})
+	_, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{})
 
 	if err == nil {
 		t.Error("expected error when no check type specified")

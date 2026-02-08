@@ -17,7 +17,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 var (
@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 	logf.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(preflightv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(clustergatev1alpha1.AddToScheme(scheme))
 
 	ctx, cancel = context.WithCancel(context.Background())
 

@@ -1,7 +1,8 @@
 resources:
   - namespace.yaml
   - manager.yaml
+  - pdb.yaml
 images:
-  - name: platform-preflight
-    newName: platform-preflight
+  - name: clustergate
+    newName: clustergate
     newTag: latest

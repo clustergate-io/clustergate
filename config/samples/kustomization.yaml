@@ -1,4 +1,4 @@
 resources:
   - clusterreadiness_v1alpha1.yaml
-  - preflightcheck_v1alpha1.yaml
-  - preflightprofile_v1alpha1.yaml
+  - gatecheck_v1alpha1.yaml
+  - gateprofile_v1alpha1.yaml

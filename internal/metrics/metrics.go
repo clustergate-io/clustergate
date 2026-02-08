@@ -10,7 +10,7 @@ var (
 	// Labels: check (check name), cluster_readiness (CR name), severity, category.
 	CheckReady = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: "preflight",
+			Namespace: "clustergate",
 			Name:      "check_ready",
 			Help:      "Whether a readiness check is passing (1) or failing (0).",
 		},
@@ -21,7 +21,7 @@ var (
 	// Labels: check (check name), severity, category.
 	CheckDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace: "preflight",
+			Namespace: "clustergate",
 			Name:      "check_duration_seconds",
 			Help:      "Duration of readiness check execution in seconds.",
 			Buckets:   prometheus.DefBuckets,
@@ -33,7 +33,7 @@ var (
 	// Labels: cluster_readiness (CR name).
 	ClusterReady = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: "preflight",
+			Namespace: "clustergate",
 			Name:      "cluster_ready",
 			Help:      "Whether the cluster is fully ready (all critical checks passing).",
 		},
@@ -44,7 +44,7 @@ var (
 	// Labels: category, cluster_readiness (CR name).
 	CategoryReady = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: "preflight",
+			Namespace: "clustergate",
 			Name:      "category_ready",
 			Help:      "Whether all critical checks in a category are passing.",
 		},

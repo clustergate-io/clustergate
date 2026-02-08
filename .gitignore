@@ -1,0 +1,5 @@
+# Ignore temporary files created by Claude
+tmpclaude-*
+
+
+*.exe

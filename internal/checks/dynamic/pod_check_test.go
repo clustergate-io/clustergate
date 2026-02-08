@@ -14,13 +14,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func dynamicTestScheme() *runtime.Scheme {
 	s := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(s))
-	utilruntime.Must(preflightv1alpha1.AddToScheme(s))
+	utilruntime.Must(clustergatev1alpha1.AddToScheme(s))
 	return s
 }
 
@@ -75,8 +75,8 @@ func TestPodCheck_PodsReady(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PodCheck: &preflightv1alpha1.PodCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PodCheck: &clustergatev1alpha1.PodCheckSpec{
 			Namespace:     "ingress",
 			LabelSelector: &metav1.LabelSelector{MatchLabels: labels},
 			MinReady:      2,
@@ -101,8 +101,8 @@ func TestPodCheck_InsufficientReady(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PodCheck: &preflightv1alpha1.PodCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PodCheck: &clustergatev1alpha1.PodCheckSpec{
 			Namespace:     "ingress",
 			LabelSelector: &metav1.LabelSelector{MatchLabels: labels},
 			MinReady:      3,
@@ -121,8 +121,8 @@ func TestPodCheck_NoPods(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PodCheck: &preflightv1alpha1.PodCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PodCheck: &clustergatev1alpha1.PodCheckSpec{
 			Namespace:     "ingress",
 			LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "nginx"}},
 			MinReady:      1,
@@ -148,8 +148,8 @@ func TestPodCheck_RunningButNotReady(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PodCheck: &preflightv1alpha1.PodCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PodCheck: &clustergatev1alpha1.PodCheckSpec{
 			Namespace:     "ingress",
 			LabelSelector: &metav1.LabelSelector{MatchLabels: labels},
 			MinReady:      2,
@@ -174,8 +174,8 @@ func TestPodCheck_NilLabelSelector(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		PodCheck: &preflightv1alpha1.PodCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		PodCheck: &clustergatev1alpha1.PodCheckSpec{
 			Namespace: "default",
 			MinReady:  2,
 		},

@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
 )
 
 func deploymentWithConditions(name, namespace string, conditions []interface{}) *unstructured.Unstructured {
@@ -38,13 +38,13 @@ func TestResourceCheck_NamedResourceMatching(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		ResourceCheck: &preflightv1alpha1.ResourceCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		ResourceCheck: &clustergatev1alpha1.ResourceCheckSpec{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 			Namespace:  "cert-manager",
 			Name:       "cert-manager",
-			Conditions: []preflightv1alpha1.ResourceConditionCheck{
+			Conditions: []clustergatev1alpha1.ResourceConditionCheck{
 				{Type: "Available", Status: "True"},
 			},
 		},
@@ -69,13 +69,13 @@ func TestResourceCheck_ConditionMismatch(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		ResourceCheck: &preflightv1alpha1.ResourceCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		ResourceCheck: &clustergatev1alpha1.ResourceCheckSpec{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 			Namespace:  "cert-manager",
 			Name:       "cert-manager",
-			Conditions: []preflightv1alpha1.ResourceConditionCheck{
+			Conditions: []clustergatev1alpha1.ResourceConditionCheck{
 				{Type: "Available", Status: "True"},
 			},
 		},
@@ -93,13 +93,13 @@ func TestResourceCheck_ResourceNotFound(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		ResourceCheck: &preflightv1alpha1.ResourceCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		ResourceCheck: &clustergatev1alpha1.ResourceCheckSpec{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 			Namespace:  "default",
 			Name:       "does-not-exist",
-			Conditions: []preflightv1alpha1.ResourceConditionCheck{
+			Conditions: []clustergatev1alpha1.ResourceConditionCheck{
 				{Type: "Available", Status: "True"},
 			},
 		},
@@ -128,13 +128,13 @@ func TestResourceCheck_NoConditions(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		ResourceCheck: &preflightv1alpha1.ResourceCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		ResourceCheck: &clustergatev1alpha1.ResourceCheckSpec{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
 			Namespace:  "default",
 			Name:       "no-conditions",
-			Conditions: []preflightv1alpha1.ResourceConditionCheck{
+			Conditions: []clustergatev1alpha1.ResourceConditionCheck{
 				{Type: "Available", Status: "True"},
 			},
 		},
@@ -152,11 +152,11 @@ func TestResourceCheck_NeitherNameNorSelector(t *testing.T) {
 	c := fake.NewClientBuilder().WithScheme(dynamicTestScheme()).Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		ResourceCheck: &preflightv1alpha1.ResourceCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		ResourceCheck: &clustergatev1alpha1.ResourceCheckSpec{
 			APIVersion: "apps/v1",
 			Kind:       "Deployment",
-			Conditions: []preflightv1alpha1.ResourceConditionCheck{
+			Conditions: []clustergatev1alpha1.ResourceConditionCheck{
 				{Type: "Available", Status: "True"},
 			},
 		},
@@ -187,13 +187,13 @@ func TestResourceCheck_LabelSelectorMultiple(t *testing.T) {
 		Build()
 
 	executor := newTestExecutor(c)
-	result, err := executor.Execute(context.Background(), "test", preflightv1alpha1.PreflightCheckSpec{
-		ResourceCheck: &preflightv1alpha1.ResourceCheckSpec{
+	result, err := executor.Execute(context.Background(), "test", clustergatev1alpha1.GateCheckSpec{
+		ResourceCheck: &clustergatev1alpha1.ResourceCheckSpec{
 			APIVersion:    "apps/v1",
 			Kind:          "Deployment",
 			Namespace:     "default",
 			LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"tier": "frontend"}},
-			Conditions: []preflightv1alpha1.ResourceConditionCheck{
+			Conditions: []clustergatev1alpha1.ResourceConditionCheck{
 				{Type: "Available", Status: "True"},
 			},
 		},

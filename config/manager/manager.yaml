@@ -1,31 +1,57 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: platform-preflight-controller
-  namespace: platform-preflight-system
+  name: clustergate-controller
+  namespace: clustergate-system
   labels:
-    app.kubernetes.io/name: platform-preflight
+    app.kubernetes.io/name: clustergate
     app.kubernetes.io/component: controller
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app.kubernetes.io/name: platform-preflight
+      app.kubernetes.io/name: clustergate
       app.kubernetes.io/component: controller
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: platform-preflight
+        app.kubernetes.io/name: clustergate
         app.kubernetes.io/component: controller
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
     spec:
-      serviceAccountName: platform-preflight-controller
+      serviceAccountName: clustergate-controller
       terminationGracePeriodSeconds: 10
+      # Spread across nodes to survive single-node failures.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: clustergate
+              app.kubernetes.io/component: controller
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - clustergate
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: manager
-          image: platform-preflight:latest
+          image: clustergate:latest
           args:
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081

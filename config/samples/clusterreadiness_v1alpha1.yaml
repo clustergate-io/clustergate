@@ -1,4 +1,4 @@
-apiVersion: preflight.platform.io/v1alpha1
+apiVersion: clustergate.io/v1alpha1
 kind: ClusterReadiness
 metadata:
   name: production-readiness
@@ -32,11 +32,11 @@ spec:
       category: networking
       config:
         testDomain: "kubernetes.default.svc.cluster.local"
-    # Dynamic check referencing a PreflightCheck CR
-    - preflightCheckRef: ingress-controller-ready
+    # Dynamic check referencing a GateCheck CR
+    - gateCheckRef: istiod-ready
       severity: critical
       category: networking
     # Dynamic check with overridden severity
-    - preflightCheckRef: vault-health
+    - gateCheckRef: vault-health
       severity: warning
       category: security

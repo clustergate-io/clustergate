@@ -1,4 +1,4 @@
 resources:
-  - bases/preflight.platform.io_clusterreadiness.yaml
-  - bases/preflight.platform.io_preflightchecks.yaml
-  - bases/preflight.platform.io_preflightprofiles.yaml
+  - bases/clustergate.io_clusterreadinesses.yaml
+  - bases/clustergate.io_gatechecks.yaml
+  - bases/clustergate.io_gateprofiles.yaml

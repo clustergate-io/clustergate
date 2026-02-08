@@ -16,11 +16,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	preflightv1alpha1 "github.com/camcast3/platform-preflight/api/v1alpha1"
-	"github.com/camcast3/platform-preflight/internal/checks"
-	"github.com/camcast3/platform-preflight/internal/checks/dynamic"
-	"github.com/camcast3/platform-preflight/internal/metrics"
-	"github.com/camcast3/platform-preflight/internal/server"
+	clustergatev1alpha1 "github.com/clustergate/clustergate/api/v1alpha1"
+	"github.com/clustergate/clustergate/internal/checks"
+	"github.com/clustergate/clustergate/internal/checks/dynamic"
+	"github.com/clustergate/clustergate/internal/metrics"
+	"github.com/clustergate/clustergate/internal/server"
 )
 
 const (
@@ -38,8 +38,8 @@ type ClusterReadinessReconciler struct {
 	DynamicExecutor *dynamic.Executor
 }
 
-// +kubebuilder:rbac:groups=preflight.platform.io,resources=clusterreadiness,verbs=get;list;watch
-// +kubebuilder:rbac:groups=preflight.platform.io,resources=clusterreadiness/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=clustergate.io,resources=clusterreadiness,verbs=get;list;watch
+// +kubebuilder:rbac:groups=clustergate.io,resources=clusterreadiness/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups="*",resources="*",verbs=get;list
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
@@ -51,7 +51,7 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	logger := log.FromContext(ctx)
 
 	// Fetch the ClusterReadiness resource.
-	var cr preflightv1alpha1.ClusterReadiness
+	var cr clustergatev1alpha1.ClusterReadiness
 	if err := r.Get(ctx, req.NamespacedName, &cr); err != nil {
 		// CR deleted — clean up state.
 		r.ReadinessState.Remove(req.Name)
@@ -129,11 +129,11 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	wg.Wait()
 
 	// Build status from results (newly executed + carried forward).
-	checkStatuses := make([]preflightv1alpha1.CheckStatus, 0, len(results)+len(carriedStatuses))
+	checkStatuses := make([]clustergatev1alpha1.CheckStatus, 0, len(results)+len(carriedStatuses))
 	healthChecks := make(map[string]*server.CheckState, len(results)+len(carriedStatuses))
 
 	// Aggregation counters
-	summary := &preflightv1alpha1.ReadinessSummary{}
+	summary := &clustergatev1alpha1.ReadinessSummary{}
 	categoryMap := make(map[string]*categoryAgg)
 
 	// Process newly executed check results
@@ -145,11 +145,11 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			message = fmt.Sprintf("check error: %v", res.err)
 		}
 
-		checkStatuses = append(checkStatuses, preflightv1alpha1.CheckStatus{
+		checkStatuses = append(checkStatuses, clustergatev1alpha1.CheckStatus{
 			Name:        res.name,
 			Source:      res.source,
 			Ready:       ready,
-			Severity:    preflightv1alpha1.Severity(res.severity),
+			Severity:    clustergatev1alpha1.Severity(res.severity),
 			Category:    res.category,
 			Message:     message,
 			LastChecked: &now,
@@ -188,9 +188,9 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Build category summaries
-	categorySummaries := make([]preflightv1alpha1.CategorySummary, 0, len(categoryMap))
+	categorySummaries := make([]clustergatev1alpha1.CategorySummary, 0, len(categoryMap))
 	for _, agg := range categoryMap {
-		categorySummaries = append(categorySummaries, preflightv1alpha1.CategorySummary{
+		categorySummaries = append(categorySummaries, clustergatev1alpha1.CategorySummary{
 			Category: agg.category,
 			Ready:    agg.ready,
 			Total:    agg.total,
@@ -302,16 +302,16 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 }
 
 // SetupWithManager sets up the controller with the Manager.
-// Watches ClusterReadiness, PreflightProfile, and PreflightCheck for changes.
+// Watches ClusterReadiness, GateProfile, and GateCheck for changes.
 func (r *ClusterReadinessReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&preflightv1alpha1.ClusterReadiness{}).
-		Watches(&preflightv1alpha1.PreflightProfile{}, handler.EnqueueRequestsFromMapFunc(
+		For(&clustergatev1alpha1.ClusterReadiness{}).
+		Watches(&clustergatev1alpha1.GateProfile{}, handler.EnqueueRequestsFromMapFunc(
 			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				return r.enqueueAllClusterReadiness(ctx)
 			},
 		)).
-		Watches(&preflightv1alpha1.PreflightCheck{}, handler.EnqueueRequestsFromMapFunc(
+		Watches(&clustergatev1alpha1.GateCheck{}, handler.EnqueueRequestsFromMapFunc(
 			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				return r.enqueueAllClusterReadiness(ctx)
 			},
@@ -321,7 +321,7 @@ func (r *ClusterReadinessReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // enqueueAllClusterReadiness returns reconcile requests for all ClusterReadiness CRs.
 func (r *ClusterReadinessReconciler) enqueueAllClusterReadiness(ctx context.Context) []reconcile.Request {
-	var list preflightv1alpha1.ClusterReadinessList
+	var list clustergatev1alpha1.ClusterReadinessList
 	if err := r.List(ctx, &list); err != nil {
 		return nil
 	}
@@ -366,10 +366,10 @@ func (r *ClusterReadinessReconciler) runBuiltinCheck(ctx context.Context, idx in
 	}
 }
 
-// runResolvedDynamicCheck executes a dynamic check via the PreflightCheck CR.
+// runResolvedDynamicCheck executes a dynamic check via the GateCheck CR.
 func (r *ClusterReadinessReconciler) runResolvedDynamicCheck(ctx context.Context, idx int, resolved ResolvedCheck, sev, cat string, results []checkResult) {
-	var pc preflightv1alpha1.PreflightCheck
-	if err := r.Get(ctx, types.NamespacedName{Name: resolved.PreflightCheckName}, &pc); err != nil {
+	var gc clustergatev1alpha1.GateCheck
+	if err := r.Get(ctx, types.NamespacedName{Name: resolved.GateCheckName}, &gc); err != nil {
 		results[idx] = checkResult{
 			name:     resolved.Identifier,
 			severity: sev,
@@ -377,14 +377,14 @@ func (r *ClusterReadinessReconciler) runResolvedDynamicCheck(ctx context.Context
 			source:   resolved.Source,
 			result: checks.Result{
 				Ready:   false,
-				Message: fmt.Sprintf("PreflightCheck CR not found: %s", resolved.PreflightCheckName),
+				Message: fmt.Sprintf("GateCheck CR not found: %s", resolved.GateCheckName),
 			},
 		}
 		return
 	}
 
 	start := time.Now()
-	res, err := r.DynamicExecutor.Execute(ctx, resolved.PreflightCheckName, pc.Spec)
+	res, err := r.DynamicExecutor.Execute(ctx, resolved.GateCheckName, gc.Spec)
 	duration := time.Since(start)
 
 	results[idx] = checkResult{
@@ -419,7 +419,7 @@ type categoryAgg struct {
 }
 
 // aggregateCheck updates summary and category aggregation for a single check result.
-func aggregateCheck(summary *preflightv1alpha1.ReadinessSummary, categoryMap map[string]*categoryAgg, severity, category string, ready bool) {
+func aggregateCheck(summary *clustergatev1alpha1.ReadinessSummary, categoryMap map[string]*categoryAgg, severity, category string, ready bool) {
 	summary.Total++
 	if ready {
 		summary.Passing++
@@ -427,13 +427,13 @@ func aggregateCheck(summary *preflightv1alpha1.ReadinessSummary, categoryMap map
 		summary.Failing++
 	}
 
-	switch preflightv1alpha1.Severity(severity) {
-	case preflightv1alpha1.SeverityCritical:
+	switch clustergatev1alpha1.Severity(severity) {
+	case clustergatev1alpha1.SeverityCritical:
 		summary.CriticalTotal++
 		if ready {
 			summary.CriticalPassing++
 		}
-	case preflightv1alpha1.SeverityWarning:
+	case clustergatev1alpha1.SeverityWarning:
 		summary.WarningTotal++
 		if !ready {
 			summary.WarningFailing++
@@ -450,7 +450,7 @@ func aggregateCheck(summary *preflightv1alpha1.ReadinessSummary, categoryMap map
 		agg.passing++
 	} else {
 		agg.failing++
-		if preflightv1alpha1.Severity(severity) == preflightv1alpha1.SeverityCritical {
+		if clustergatev1alpha1.Severity(severity) == clustergatev1alpha1.SeverityCritical {
 			agg.ready = false
 		}
 	}

@@ -11,7 +11,7 @@ type ClusterReadinessSpec struct {
 	// +optional
 	Interval metav1.Duration `json:"interval,omitempty"`
 
-	// Profiles references PreflightProfile CRs to include in this readiness evaluation.
+	// Profiles references GateProfile CRs to include in this readiness evaluation.
 	// +optional
 	Profiles []ProfileRef `json:"profiles,omitempty"`
 
@@ -21,26 +21,26 @@ type ClusterReadinessSpec struct {
 	Checks []CheckSpec `json:"checks,omitempty"`
 }
 
-// ProfileRef references a PreflightProfile CR by name.
+// ProfileRef references a GateProfile CR by name.
 type ProfileRef struct {
-	// Name is the metadata.name of the PreflightProfile CR.
+	// Name is the metadata.name of the GateProfile CR.
 	Name string `json:"name"`
 }
 
 // CheckSpec defines a single readiness check to run.
 type CheckSpec struct {
 	// Name is the identifier for a built-in check (e.g. "dns").
-	// Mutually exclusive with PreflightCheckRef.
+	// Mutually exclusive with GateCheckRef.
 	// +optional
 	Name string `json:"name,omitempty"`
 
-	// PreflightCheckRef references a PreflightCheck CR by metadata.name.
+	// GateCheckRef references a GateCheck CR by metadata.name.
 	// Mutually exclusive with Name.
 	// +optional
-	PreflightCheckRef string `json:"preflightCheckRef,omitempty"`
+	GateCheckRef string `json:"gateCheckRef,omitempty"`
 
 	// Severity overrides the check's default severity.
-	// Defaults to "critical" for built-in checks, or the PreflightCheck's severity.
+	// Defaults to "critical" for built-in checks, or the GateCheck's severity.
 	// +optional
 	Severity *Severity `json:"severity,omitempty"`
 
@@ -140,7 +140,7 @@ type CategorySummary struct {
 
 // CheckStatus reports the result of a single readiness check.
 type CheckStatus struct {
-	// Name matches the check identifier (built-in name or PreflightCheck ref).
+	// Name matches the check identifier (built-in name or GateCheck ref).
 	Name string `json:"name"`
 
 	// Source indicates where this check originated: "builtin", "dynamic", or "profile:<name>".

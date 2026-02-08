@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/camcast3/platform-preflight/internal/checks"
+	"github.com/clustergate/clustergate/internal/checks"
 )
 
 const (
