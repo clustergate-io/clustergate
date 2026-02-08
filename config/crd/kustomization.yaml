@@ -1,0 +1,4 @@
+resources:
+  - bases/preflight.platform.io_clusterreadiness.yaml
+  - bases/preflight.platform.io_preflightchecks.yaml
+  - bases/preflight.platform.io_preflightprofiles.yaml

@@ -1,0 +1,42 @@
+apiVersion: preflight.platform.io/v1alpha1
+kind: ClusterReadiness
+metadata:
+  name: production-readiness
+spec:
+  interval: 60s
+  # Reference a profile for baseline checks
+  profiles:
+    - name: production-baseline
+  checks:
+    # Built-in control plane checks
+    - name: kube-apiserver
+      enabled: true
+      severity: critical
+      category: control-plane
+    - name: etcd
+      enabled: true
+      severity: critical
+      category: control-plane
+    - name: kube-scheduler
+      enabled: true
+      severity: critical
+      category: control-plane
+    - name: kube-controller-manager
+      enabled: true
+      severity: critical
+      category: control-plane
+    # Built-in DNS check
+    - name: dns
+      enabled: true
+      severity: critical
+      category: networking
+      config:
+        testDomain: "kubernetes.default.svc.cluster.local"
+    # Dynamic check referencing a PreflightCheck CR
+    - preflightCheckRef: ingress-controller-ready
+      severity: critical
+      category: networking
+    # Dynamic check with overridden severity
+    - preflightCheckRef: vault-health
+      severity: warning
+      category: security

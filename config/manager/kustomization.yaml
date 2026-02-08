@@ -1,0 +1,7 @@
+resources:
+  - namespace.yaml
+  - manager.yaml
+images:
+  - name: platform-preflight
+    newName: platform-preflight
+    newTag: latest

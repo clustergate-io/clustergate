@@ -1,0 +1,81 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platform-preflight-controller
+rules:
+  # ClusterReadiness CRD access
+  - apiGroups:
+      - preflight.platform.io
+    resources:
+      - clusterreadiness
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - preflight.platform.io
+    resources:
+      - clusterreadiness/status
+    verbs:
+      - get
+      - update
+      - patch
+  # PreflightCheck CRD access
+  - apiGroups:
+      - preflight.platform.io
+    resources:
+      - preflightchecks
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - preflight.platform.io
+    resources:
+      - preflightchecks/status
+    verbs:
+      - get
+      - update
+      - patch
+  # PreflightProfile CRD access
+  - apiGroups:
+      - preflight.platform.io
+    resources:
+      - preflightprofiles
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - preflight.platform.io
+    resources:
+      - preflightprofiles/status
+    verbs:
+      - get
+      - update
+      - patch
+  # Pod access for DNS check and PodCheck dynamic checks
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  # Broad read access for ResourceCheck executor (any resource type)
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - get
+      - list
+  # Events for recording controller activity
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch

@@ -1,0 +1,31 @@
+version: "3"
+domain: platform.io
+repo: github.com/camcast3/platform-preflight
+projectName: platform-preflight
+layout:
+  - go.kubebuilder.io/v4
+resources:
+  - api:
+      crdVersion: v1
+      namespaced: false
+    controller: true
+    group: preflight
+    kind: ClusterReadiness
+    path: github.com/camcast3/platform-preflight/api/v1alpha1
+    version: v1alpha1
+  - api:
+      crdVersion: v1
+      namespaced: false
+    controller: true
+    group: preflight
+    kind: PreflightCheck
+    path: github.com/camcast3/platform-preflight/api/v1alpha1
+    version: v1alpha1
+  - api:
+      crdVersion: v1
+      namespaced: false
+    controller: true
+    group: preflight
+    kind: PreflightProfile
+    path: github.com/camcast3/platform-preflight/api/v1alpha1
+    version: v1alpha1

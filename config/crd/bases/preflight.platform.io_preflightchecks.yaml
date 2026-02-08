@@ -1,0 +1,299 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: preflightchecks.preflight.platform.io
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+spec:
+  group: preflight.platform.io
+  names:
+    kind: PreflightCheck
+    listKind: PreflightCheckList
+    plural: preflightchecks
+    singular: preflightcheck
+    shortNames:
+      - pc
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Severity
+          type: string
+          jsonPath: .spec.severity
+        - name: Category
+          type: string
+          jsonPath: .spec.category
+        - name: Valid
+          type: boolean
+          jsonPath: .status.valid
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: PreflightCheck defines a dynamic readiness check that can be created without recompiling.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              description: PreflightCheckSpec defines a dynamic readiness check.
+              properties:
+                description:
+                  type: string
+                  description: Human-readable summary of what this check verifies.
+                severity:
+                  type: string
+                  description: >-
+                    Determines how this check affects overall readiness.
+                    One of: critical, warning, info.
+                  enum:
+                    - critical
+                    - warning
+                    - info
+                  default: critical
+                category:
+                  type: string
+                  description: Groups this check for filtering and reporting.
+                  default: custom
+                interval:
+                  type: string
+                  description: >-
+                    Overrides the default check interval from ClusterReadiness.
+                    Accepts duration strings like "10s", "5m".
+                podCheck:
+                  type: object
+                  description: Verifies that pods matching criteria exist and are ready.
+                  required:
+                    - namespace
+                    - labelSelector
+                  properties:
+                    namespace:
+                      type: string
+                      description: Namespace to search for pods.
+                    labelSelector:
+                      type: object
+                      description: Label selector to match pods.
+                      properties:
+                        matchLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        matchExpressions:
+                          type: array
+                          items:
+                            type: object
+                            required:
+                              - key
+                              - operator
+                            properties:
+                              key:
+                                type: string
+                              operator:
+                                type: string
+                                enum:
+                                  - In
+                                  - NotIn
+                                  - Exists
+                                  - DoesNotExist
+                              values:
+                                type: array
+                                items:
+                                  type: string
+                    minReady:
+                      type: integer
+                      description: Minimum number of pods that must be Running and Ready.
+                      minimum: 1
+                      default: 1
+                httpCheck:
+                  type: object
+                  description: Performs an HTTP request and validates the response.
+                  required:
+                    - url
+                  properties:
+                    url:
+                      type: string
+                      description: URL to send the request to.
+                    method:
+                      type: string
+                      description: HTTP method. Defaults to GET.
+                      default: GET
+                    expectedStatusCodes:
+                      type: array
+                      description: Set of acceptable HTTP response codes. Defaults to [200].
+                      items:
+                        type: integer
+                    timeoutSeconds:
+                      type: integer
+                      description: Per-request timeout in seconds. Defaults to 10.
+                      default: 10
+                    headers:
+                      type: object
+                      description: Headers to include in the request.
+                      additionalProperties:
+                        type: string
+                    insecureSkipTLSVerify:
+                      type: boolean
+                      description: Disables TLS certificate verification.
+                      default: false
+                resourceCheck:
+                  type: object
+                  description: Verifies conditions on a Kubernetes resource.
+                  required:
+                    - apiVersion
+                    - kind
+                    - conditions
+                  properties:
+                    apiVersion:
+                      type: string
+                      description: API version of the resource (e.g. "apps/v1").
+                    kind:
+                      type: string
+                      description: Kind of the resource (e.g. "Deployment").
+                    namespace:
+                      type: string
+                      description: Namespace of the resource. Empty for cluster-scoped resources.
+                    name:
+                      type: string
+                      description: Name of a specific resource. Mutually exclusive with labelSelector.
+                    labelSelector:
+                      type: object
+                      description: Label selector to match resources. Mutually exclusive with name.
+                      properties:
+                        matchLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        matchExpressions:
+                          type: array
+                          items:
+                            type: object
+                            required:
+                              - key
+                              - operator
+                            properties:
+                              key:
+                                type: string
+                              operator:
+                                type: string
+                                enum:
+                                  - In
+                                  - NotIn
+                                  - Exists
+                                  - DoesNotExist
+                              values:
+                                type: array
+                                items:
+                                  type: string
+                    conditions:
+                      type: array
+                      description: Conditions to verify on the matched resource(s).
+                      minItems: 1
+                      items:
+                        type: object
+                        required:
+                          - type
+                          - status
+                        properties:
+                          type:
+                            type: string
+                            description: Condition type to check (e.g. "Available", "Ready").
+                          status:
+                            type: string
+                            description: 'Expected condition status: "True", "False", or "Unknown".'
+                            enum:
+                              - "True"
+                              - "False"
+                              - Unknown
+                promqlCheck:
+                  type: object
+                  description: Queries a Prometheus instance and evaluates the result.
+                  required:
+                    - endpoint
+                    - query
+                    - condition
+                  properties:
+                    endpoint:
+                      type: string
+                      description: Prometheus server URL (e.g. "http://prometheus.monitoring.svc:9090").
+                    query:
+                      type: string
+                      description: PromQL expression to execute.
+                    condition:
+                      type: object
+                      description: Defines how to evaluate the query result.
+                      required:
+                        - type
+                        - operator
+                        - threshold
+                      properties:
+                        type:
+                          type: string
+                          description: >-
+                            Condition type: "resultCount" asserts on the number of time series returned,
+                            "value" asserts that all returned sample values satisfy the comparison.
+                          enum:
+                            - resultCount
+                            - value
+                        operator:
+                          type: string
+                          description: "Comparison operator: gte, lte, eq, gt, lt."
+                          enum:
+                            - gte
+                            - lte
+                            - eq
+                            - gt
+                            - lt
+                        threshold:
+                          type: number
+                          description: Value to compare against.
+                    timeoutSeconds:
+                      type: integer
+                      description: Query timeout in seconds. Defaults to 10.
+                      default: 10
+            status:
+              type: object
+              description: PreflightCheckStatus reports the observed state.
+              properties:
+                valid:
+                  type: boolean
+                  description: Whether this check definition is well-formed and executable.
+                message:
+                  type: string
+                  description: Describes the validation result.
+                conditions:
+                  type: array
+                  description: Standard Kubernetes conditions.
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                      - lastTransitionTime
+                      - reason
+                      - message
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string

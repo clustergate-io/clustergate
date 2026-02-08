@@ -1,0 +1,5 @@
+namespace: platform-preflight-system
+resources:
+  - ../crd
+  - ../rbac
+  - ../manager

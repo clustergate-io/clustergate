@@ -1,0 +1,201 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusterreadiness.preflight.platform.io
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+spec:
+  group: preflight.platform.io
+  names:
+    kind: ClusterReadiness
+    listKind: ClusterReadinessList
+    plural: clusterreadiness
+    singular: clusterreadiness
+    shortNames:
+      - cr
+      - preflight
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Ready
+          type: boolean
+          jsonPath: .status.ready
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: ClusterReadiness defines the readiness criteria for a Kubernetes cluster.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              description: ClusterReadinessSpec defines the desired readiness checks.
+              properties:
+                interval:
+                  type: string
+                  description: >-
+                    Default interval for checks that don't specify their own.
+                    Accepts duration strings like "30s", "5m", "1h". Defaults to 60s.
+                profiles:
+                  type: array
+                  description: References to PreflightProfile CRs to include.
+                  items:
+                    type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the PreflightProfile CR.
+                checks:
+                  type: array
+                  description: List of inline readiness checks to run. Overrides profile checks with the same identifier.
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: >-
+                          Identifier for a built-in check (e.g. "dns").
+                          Mutually exclusive with preflightCheckRef.
+                      preflightCheckRef:
+                        type: string
+                        description: >-
+                          References a PreflightCheck CR by metadata.name.
+                          Mutually exclusive with name.
+                      severity:
+                        type: string
+                        description: >-
+                          Overrides the check's default severity.
+                          One of: critical, warning, info.
+                        enum:
+                          - critical
+                          - warning
+                          - info
+                      category:
+                        type: string
+                        description: >-
+                          Overrides the check's default category
+                          (e.g. "networking", "control-plane", "security").
+                      interval:
+                        type: string
+                        description: >-
+                          Overrides the default interval for this specific check.
+                          Accepts duration strings like "10s", "5m".
+                      enabled:
+                        type: boolean
+                        description: Whether this check is active. Defaults to true.
+                      config:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                        description: Check-specific configuration as arbitrary key-value pairs.
+            status:
+              type: object
+              description: ClusterReadinessStatus defines the observed readiness state.
+              properties:
+                ready:
+                  type: boolean
+                  description: Whether all critical-severity checks are passing.
+                summary:
+                  type: object
+                  description: Aggregated counts across all checks.
+                  properties:
+                    total:
+                      type: integer
+                    passing:
+                      type: integer
+                    failing:
+                      type: integer
+                    criticalTotal:
+                      type: integer
+                    criticalPassing:
+                      type: integer
+                    warningTotal:
+                      type: integer
+                    warningFailing:
+                      type: integer
+                categorySummaries:
+                  type: array
+                  description: Per-category aggregation of check results.
+                  items:
+                    type: object
+                    properties:
+                      category:
+                        type: string
+                      ready:
+                        type: boolean
+                      total:
+                        type: integer
+                      passing:
+                        type: integer
+                      failing:
+                        type: integer
+                lastChecked:
+                  type: string
+                  format: date-time
+                  description: Last time any check was evaluated.
+                checks:
+                  type: array
+                  description: Per-check results.
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      source:
+                        type: string
+                        description: Where this check originated (builtin, dynamic, profile:<name>).
+                      ready:
+                        type: boolean
+                      severity:
+                        type: string
+                        enum:
+                          - critical
+                          - warning
+                          - info
+                      category:
+                        type: string
+                      message:
+                        type: string
+                      lastChecked:
+                        type: string
+                        format: date-time
+                conditions:
+                  type: array
+                  description: Standard Kubernetes conditions.
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                      - lastTransitionTime
+                      - reason
+                      - message
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                          - "True"
+                          - "False"
+                          - Unknown
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string

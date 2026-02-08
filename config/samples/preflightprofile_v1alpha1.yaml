@@ -1,0 +1,47 @@
+---
+# Production baseline profile: bundles common checks for production clusters
+apiVersion: preflight.platform.io/v1alpha1
+kind: PreflightProfile
+metadata:
+  name: production-baseline
+spec:
+  description: "Baseline readiness checks for production clusters"
+  checks:
+    # Built-in control plane checks
+    - name: kube-apiserver
+      severity: critical
+      category: control-plane
+    - name: etcd
+      severity: critical
+      category: control-plane
+    - name: kube-scheduler
+      severity: critical
+      category: control-plane
+    - name: kube-controller-manager
+      severity: critical
+      category: control-plane
+    # Built-in DNS check
+    - name: dns
+      severity: critical
+      category: networking
+    # Dynamic checks referencing PreflightCheck CRs
+    - preflightCheckRef: ingress-controller-ready
+    - preflightCheckRef: cert-manager-ready
+    - preflightCheckRef: vault-health
+---
+# Minimal profile for dev/staging environments
+apiVersion: preflight.platform.io/v1alpha1
+kind: PreflightProfile
+metadata:
+  name: dev-baseline
+spec:
+  description: "Minimal readiness checks for development clusters"
+  checks:
+    - name: kube-apiserver
+      severity: critical
+      category: control-plane
+    - name: dns
+      severity: warning
+      category: networking
+    - preflightCheckRef: ingress-controller-ready
+      severity: warning
