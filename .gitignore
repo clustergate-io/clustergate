@@ -1,5 +1,6 @@
 # Ignore temporary files created by Claude
 tmpclaude-*
 
-
+# Ignore build artifacts and binaries
+bin/
 *.exe
