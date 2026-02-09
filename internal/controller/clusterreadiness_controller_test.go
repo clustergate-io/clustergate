@@ -100,8 +100,8 @@ func TestAggregateCheck(t *testing.T) {
 			if !exists {
 				t.Fatal("expected category to exist in map")
 			}
-			if agg.ready != tt.wantCatReady {
-				t.Errorf("category ready = %v, want %v", agg.ready, tt.wantCatReady)
+			if !agg.criticalFailing != tt.wantCatReady {
+				t.Errorf("category criticalFailing = %v, want catReady %v", agg.criticalFailing, tt.wantCatReady)
 			}
 		})
 	}
@@ -138,8 +138,8 @@ func TestAggregateCheck_MultipleCalls(t *testing.T) {
 	}
 
 	agg := categoryMap["networking"]
-	if agg.ready {
-		t.Error("expected networking category not ready (critical failing)")
+	if !agg.criticalFailing {
+		t.Error("expected networking category criticalFailing=true (critical failing)")
 	}
 	if agg.total != 3 {
 		t.Errorf("category total = %d, want 3", agg.total)

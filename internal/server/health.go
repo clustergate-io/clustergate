@@ -33,7 +33,7 @@ type ReadinessSummaryView struct {
 // CategorySummaryView provides per-category check counts for the HTTP response.
 type CategorySummaryView struct {
 	Category string `json:"category"`
-	Ready    bool   `json:"ready"`
+	State    string `json:"state"`
 	Total    int    `json:"total"`
 	Passing  int    `json:"passing"`
 	Failing  int    `json:"failing"`
@@ -41,7 +41,7 @@ type CategorySummaryView struct {
 
 // CheckState represents readiness for a single check.
 type CheckState struct {
-	Ready    bool   `json:"ready"`
+	Status   string `json:"status"`
 	Message  string `json:"message,omitempty"`
 	Severity string `json:"severity"`
 	Category string `json:"category"`
@@ -173,11 +173,11 @@ func filterSnapshot(snap map[string]*ClusterState, categoryFilter, severityFilte
 		// Recompute state from filtered checks
 		state := "Healthy"
 		for _, check := range filteredChecks {
-			if !check.Ready && check.Severity == "critical" {
+			if check.Status == "Failing" && check.Severity == "critical" {
 				state = "Unhealthy"
 				break
 			}
-			if !check.Ready && check.Severity == "warning" {
+			if check.Status == "Failing" && check.Severity == "warning" {
 				state = "Degraded"
 			}
 		}

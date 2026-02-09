@@ -14,8 +14,8 @@ func TestFormatText_AllPass(t *testing.T) {
 		Passed: 2,
 		Failed: 0,
 		Checks: []CheckResult{
-			{Name: "dns", Category: "networking", Severity: "critical", Ready: true, Message: "DNS operational"},
-			{Name: "kube-apiserver", Category: "control-plane", Severity: "critical", Ready: true, Message: "healthy"},
+			{Name: "dns", Category: "networking", Severity: "critical", Status: "Passing", Message: "DNS operational"},
+			{Name: "kube-apiserver", Category: "control-plane", Severity: "critical", Status: "Passing", Message: "healthy"},
 		},
 	}
 
@@ -47,8 +47,8 @@ func TestFormatText_SomeFail(t *testing.T) {
 		Passed: 1,
 		Failed: 1,
 		Checks: []CheckResult{
-			{Name: "dns", Category: "networking", Severity: "critical", Ready: true, Message: "DNS operational"},
-			{Name: "kube-apiserver", Category: "control-plane", Severity: "critical", Ready: false, Message: "unhealthy"},
+			{Name: "dns", Category: "networking", Severity: "critical", Status: "Passing", Message: "DNS operational"},
+			{Name: "kube-apiserver", Category: "control-plane", Severity: "critical", Status: "Failing", Message: "unhealthy"},
 		},
 	}
 
@@ -118,7 +118,7 @@ func TestFormatJSON_AllPass(t *testing.T) {
 		Passed: 1,
 		Failed: 0,
 		Checks: []CheckResult{
-			{Name: "dns", Category: "networking", Severity: "critical", Ready: true, Message: "ok"},
+			{Name: "dns", Category: "networking", Severity: "critical", Status: "Passing", Message: "ok"},
 		},
 	}
 
@@ -146,8 +146,8 @@ func TestFormatJSON_SomeFail(t *testing.T) {
 		Passed: 1,
 		Failed: 1,
 		Checks: []CheckResult{
-			{Name: "dns", Ready: true, Message: "ok"},
-			{Name: "etcd", Ready: false, Message: "down"},
+			{Name: "dns", Status: "Passing", Message: "ok"},
+			{Name: "etcd", Status: "Failing", Message: "down"},
 		},
 	}
 
@@ -170,7 +170,7 @@ func TestFormatJSON_SomeFail(t *testing.T) {
 
 func TestFormatJSON_Indented(t *testing.T) {
 	report := &Report{State: "Healthy", Total: 1, Passed: 1, Checks: []CheckResult{
-		{Name: "dns", Ready: true, Message: "ok"},
+		{Name: "dns", Status: "Passing", Message: "ok"},
 	}}
 
 	var buf bytes.Buffer
@@ -189,7 +189,7 @@ func TestFormatText_CategoryAndSeverity(t *testing.T) {
 		Total:  1,
 		Passed: 1,
 		Checks: []CheckResult{
-			{Name: "dns", Category: "networking", Severity: "critical", Ready: true, Message: "ok"},
+			{Name: "dns", Category: "networking", Severity: "critical", Status: "Passing", Message: "ok"},
 		},
 	}
 

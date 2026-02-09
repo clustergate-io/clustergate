@@ -87,17 +87,13 @@ type ClusterReadinessStatus struct {
 	// +optional
 	Summary *ReadinessSummary `json:"summary,omitempty"`
 
-	// CategorySummaries provides per-category aggregation.
+	// Categories provides per-category check results and aggregation.
 	// +optional
-	CategorySummaries []CategorySummary `json:"categorySummaries,omitempty"`
+	Categories []CategoryStatus `json:"categories,omitempty"`
 
 	// LastChecked is the last time any check was evaluated.
 	// +optional
 	LastChecked *metav1.Time `json:"lastChecked,omitempty"`
-
-	// Checks contains the per-check results.
-	// +optional
-	Checks []CheckStatus `json:"checks,omitempty"`
 
 	// Conditions represent the latest available observations of the resource's state.
 	// +optional
@@ -128,13 +124,17 @@ type ReadinessSummary struct {
 	WarningFailing int `json:"warningFailing"`
 }
 
-// CategorySummary aggregates check results for one category.
-type CategorySummary struct {
+// CategoryStatus aggregates check results and details for one category.
+type CategoryStatus struct {
 	// Category name.
 	Category string `json:"category"`
 
-	// Ready indicates all critical checks in this category are passing.
-	Ready bool `json:"ready"`
+	// Checks contains the individual check results in this category.
+	// +optional
+	Checks []CheckStatus `json:"checks,omitempty"`
+
+	// State indicates the health of this category: Healthy, Degraded, or Unhealthy.
+	State string `json:"state"`
 
 	// Total number of checks in this category.
 	Total int `json:"total"`
@@ -155,14 +155,11 @@ type CheckStatus struct {
 	// +optional
 	Source string `json:"source,omitempty"`
 
-	// Ready indicates whether this check is passing.
-	Ready bool `json:"ready"`
+	// Status indicates whether this check is Passing or Failing.
+	Status string `json:"status"`
 
 	// Severity of this check.
 	Severity Severity `json:"severity"`
-
-	// Category of this check.
-	Category string `json:"category"`
 
 	// Message is a human-readable description of the check result.
 	// +optional

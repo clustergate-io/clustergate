@@ -15,7 +15,7 @@ func FormatText(w io.Writer, report *Report) {
 
 	for _, c := range report.Checks {
 		marker := "[PASS]"
-		if !c.Ready {
+		if c.Status == "Failing" {
 			marker = "[FAIL]"
 		}
 		fmt.Fprintf(w, "%s %s (%s/%s)\n", marker, c.Name, c.Category, c.Severity)

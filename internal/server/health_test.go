@@ -89,7 +89,7 @@ func TestReadinessState_Remove(t *testing.T) {
 func TestReadyzHandler_Ready(t *testing.T) {
 	rs := NewReadinessState()
 	rs.Update("test-cluster", "Healthy", map[string]*CheckState{
-		"dns": {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
+		"dns": {Status: "Passing", Message: "ok", Severity: "critical", Category: "networking"},
 	}, &ReadinessSummaryView{Total: 1, Passing: 1}, nil)
 
 	handler := ReadyzHandler(rs)
@@ -119,7 +119,7 @@ func TestReadyzHandler_Ready(t *testing.T) {
 func TestReadyzHandler_NotReady(t *testing.T) {
 	rs := NewReadinessState()
 	rs.Update("test-cluster", "Unhealthy", map[string]*CheckState{
-		"dns": {Ready: false, Message: "failing", Severity: "critical", Category: "networking"},
+		"dns": {Status: "Failing", Message: "failing", Severity: "critical", Category: "networking"},
 	}, nil, nil)
 
 	handler := ReadyzHandler(rs)
@@ -157,9 +157,9 @@ func TestReadyzHandler_Empty(t *testing.T) {
 func TestReadyzHandler_CategoryFilter(t *testing.T) {
 	rs := NewReadinessState()
 	rs.Update("test-cluster", "Healthy", map[string]*CheckState{
-		"dns":     {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
-		"ingress": {Ready: false, Message: "failing", Severity: "critical", Category: "networking"},
-		"vault":   {Ready: true, Message: "ok", Severity: "critical", Category: "security"},
+		"dns":     {Status: "Passing", Message: "ok", Severity: "critical", Category: "networking"},
+		"ingress": {Status: "Failing", Message: "failing", Severity: "critical", Category: "networking"},
+		"vault":   {Status: "Passing", Message: "ok", Severity: "critical", Category: "security"},
 	}, nil, nil)
 
 	handler := ReadyzHandler(rs)
@@ -195,8 +195,8 @@ func TestReadyzHandler_CategoryFilter(t *testing.T) {
 func TestReadyzHandler_SeverityFilter(t *testing.T) {
 	rs := NewReadinessState()
 	rs.Update("test-cluster", "Degraded", map[string]*CheckState{
-		"dns":     {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
-		"logging": {Ready: false, Message: "degraded", Severity: "warning", Category: "observability"},
+		"dns":     {Status: "Passing", Message: "ok", Severity: "critical", Category: "networking"},
+		"logging": {Status: "Failing", Message: "degraded", Severity: "warning", Category: "observability"},
 	}, nil, nil)
 
 	handler := ReadyzHandler(rs)
@@ -227,9 +227,9 @@ func TestFilterSnapshot(t *testing.T) {
 		"cluster-1": {
 			State: "Healthy",
 			Checks: map[string]*CheckState{
-				"dns":     {Ready: true, Severity: "critical", Category: "networking"},
-				"ingress": {Ready: false, Severity: "critical", Category: "networking"},
-				"vault":   {Ready: true, Severity: "warning", Category: "security"},
+				"dns":     {Status: "Passing", Severity: "critical", Category: "networking"},
+				"ingress": {Status: "Failing", Severity: "critical", Category: "networking"},
+				"vault":   {Status: "Passing", Severity: "warning", Category: "security"},
 			},
 		},
 	}

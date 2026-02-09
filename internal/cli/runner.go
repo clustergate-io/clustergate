@@ -12,7 +12,7 @@ type CheckResult struct {
 	Name     string            `json:"name"`
 	Category string            `json:"category"`
 	Severity string            `json:"severity"`
-	Ready    bool              `json:"ready"`
+	Status   string            `json:"status"`
 	Message  string            `json:"message"`
 	Details  map[string]string `json:"details,omitempty"`
 }
@@ -70,7 +70,7 @@ func RunChecks(ctx context.Context, checkers []checks.Checker, filter map[string
 			Name:     c.Name(),
 			Category: c.DefaultCategory(),
 			Severity: c.DefaultSeverity(),
-			Ready:    result.Ready,
+			Status:   statusStr(result.Ready),
 			Message:  result.Message,
 			Details:  result.Details,
 		})
@@ -97,4 +97,12 @@ func RunChecks(ctx context.Context, checkers []checks.Checker, filter map[string
 	}
 
 	return report
+}
+
+// statusStr converts a ready bool to a human-readable status string.
+func statusStr(ready bool) string {
+	if ready {
+		return "Passing"
+	}
+	return "Failing"
 }

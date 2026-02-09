@@ -25,10 +25,6 @@ import (
 
 const (
 	defaultInterval = 60 * time.Second
-
-	// Condition types
-	ConditionReady    = "Ready"
-	ConditionDegraded = "Degraded"
 )
 
 // ClusterReadinessReconciler reconciles a ClusterReadiness object.
@@ -103,7 +99,18 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// Determine which checks are due for execution based on per-check intervals.
 	now := metav1.Now()
-	dueChecks, carriedStatuses, nextRequeue := CheckSchedule(resolvedChecks, cr.Status.Checks, now.Time)
+
+	// Flatten existing categories for scheduler lookup.
+	var existingChecks []clustergatev1alpha1.CheckStatus
+	existingCategoryLookup := make(map[string]string)
+	for _, cat := range cr.Status.Categories {
+		for _, c := range cat.Checks {
+			existingChecks = append(existingChecks, c)
+			existingCategoryLookup[c.Name] = cat.Category
+		}
+	}
+
+	dueChecks, carriedStatuses, nextRequeue := CheckSchedule(resolvedChecks, existingChecks, now.Time)
 
 	logger.Info("check scheduling",
 		"total", len(resolvedChecks),
@@ -135,7 +142,6 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	wg.Wait()
 
 	// Build status from results (newly executed + carried forward).
-	checkStatuses := make([]clustergatev1alpha1.CheckStatus, 0, len(results)+len(carriedStatuses))
 	healthChecks := make(map[string]*server.CheckState, len(results)+len(carriedStatuses))
 
 	// Aggregation counters
@@ -151,18 +157,22 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			message = fmt.Sprintf("check error: %v", res.err)
 		}
 
-		checkStatuses = append(checkStatuses, clustergatev1alpha1.CheckStatus{
+		status := "Passing"
+		if !ready {
+			status = "Failing"
+		}
+
+		cs := clustergatev1alpha1.CheckStatus{
 			Name:        res.name,
 			Source:      res.source,
-			Ready:       ready,
+			Status:      status,
 			Severity:    clustergatev1alpha1.Severity(res.severity),
-			Category:    res.category,
 			Message:     message,
 			LastChecked: &now,
-		})
+		}
 
 		healthChecks[res.name] = &server.CheckState{
-			Ready:    ready,
+			Status:   status,
 			Message:  message,
 			Severity: res.severity,
 			Category: res.category,
@@ -177,28 +187,46 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		metrics.CheckDuration.WithLabelValues(res.name, res.severity, res.category).Observe(res.duration.Seconds())
 
 		aggregateCheck(summary, categoryMap, res.severity, res.category, ready)
+		categoryMap[res.category].checks = append(categoryMap[res.category].checks, cs)
 	}
 
 	// Process carried-forward check statuses
 	for _, cs := range carriedStatuses {
-		checkStatuses = append(checkStatuses, cs)
+		cat := existingCategoryLookup[cs.Name]
 
 		healthChecks[cs.Name] = &server.CheckState{
-			Ready:    cs.Ready,
+			Status:   cs.Status,
 			Message:  cs.Message,
 			Severity: string(cs.Severity),
-			Category: cs.Category,
+			Category: cat,
 		}
 
-		aggregateCheck(summary, categoryMap, string(cs.Severity), cs.Category, cs.Ready)
+		ready := cs.Status == "Passing"
+		aggregateCheck(summary, categoryMap, string(cs.Severity), cat, ready)
+		categoryMap[cat].checks = append(categoryMap[cat].checks, cs)
 	}
 
-	// Build category summaries
-	categorySummaries := make([]clustergatev1alpha1.CategorySummary, 0, len(categoryMap))
+	// Build categories with nested checks
+	categories := make([]clustergatev1alpha1.CategoryStatus, 0, len(categoryMap))
 	for _, agg := range categoryMap {
-		categorySummaries = append(categorySummaries, clustergatev1alpha1.CategorySummary{
+		var catState string
+		if agg.criticalFailing {
+			catState = "Unhealthy"
+		} else if agg.warningFailing {
+			catState = "Degraded"
+		} else {
+			catState = "Healthy"
+		}
+
+		// Sort checks within category for deterministic output
+		sort.Slice(agg.checks, func(i, j int) bool {
+			return agg.checks[i].Name < agg.checks[j].Name
+		})
+
+		categories = append(categories, clustergatev1alpha1.CategoryStatus{
 			Category: agg.category,
-			Ready:    agg.ready,
+			State:    catState,
+			Checks:   agg.checks,
 			Total:    agg.total,
 			Passing:  agg.passing,
 			Failing:  agg.failing,
@@ -206,14 +234,14 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 		// Update category metrics
 		catReadyVal := float64(0)
-		if agg.ready {
+		if !agg.criticalFailing {
 			catReadyVal = 1
 		}
 		metrics.CategoryReady.WithLabelValues(agg.category, req.Name).Set(catReadyVal)
 	}
 	// Sort for deterministic output
-	sort.Slice(categorySummaries, func(i, j int) bool {
-		return categorySummaries[i].Category < categorySummaries[j].Category
+	sort.Slice(categories, func(i, j int) bool {
+		return categories[i].Category < categories[j].Category
 	})
 
 	// Readiness is determined by critical checks only
@@ -255,11 +283,11 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		CriticalPassing: summary.CriticalPassing,
 		WarningFailing:  summary.WarningFailing,
 	}
-	healthCategorySummaries := make([]server.CategorySummaryView, len(categorySummaries))
-	for i, cs := range categorySummaries {
+	healthCategorySummaries := make([]server.CategorySummaryView, len(categories))
+	for i, cs := range categories {
 		healthCategorySummaries[i] = server.CategorySummaryView{
 			Category: cs.Category,
-			Ready:    cs.Ready,
+			State:    cs.State,
 			Total:    cs.Total,
 			Passing:  cs.Passing,
 			Failing:  cs.Failing,
@@ -272,42 +300,8 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Update CR status.
 	cr.Status.State = healthState
 	cr.Status.LastChecked = &now
-	cr.Status.Checks = checkStatuses
+	cr.Status.Categories = categories
 	cr.Status.Summary = summary
-	cr.Status.CategorySummaries = categorySummaries
-
-	// Set the Ready condition.
-	readyCondition := metav1.Condition{
-		Type:               ConditionReady,
-		LastTransitionTime: now,
-	}
-	if allCriticalReady {
-		readyCondition.Status = metav1.ConditionTrue
-		readyCondition.Reason = "AllCriticalChecksPassing"
-		readyCondition.Message = fmt.Sprintf("All %d critical checks are passing", summary.CriticalTotal)
-	} else {
-		readyCondition.Status = metav1.ConditionFalse
-		readyCondition.Reason = "CriticalChecksFailing"
-		failCount := summary.CriticalTotal - summary.CriticalPassing
-		readyCondition.Message = fmt.Sprintf("%d of %d critical checks failing", failCount, summary.CriticalTotal)
-	}
-	meta.SetStatusCondition(&cr.Status.Conditions, readyCondition)
-
-	// Set the Degraded condition for warnings.
-	degradedCondition := metav1.Condition{
-		Type:               ConditionDegraded,
-		LastTransitionTime: now,
-	}
-	if summary.WarningFailing > 0 {
-		degradedCondition.Status = metav1.ConditionTrue
-		degradedCondition.Reason = "WarningChecksFailing"
-		degradedCondition.Message = fmt.Sprintf("%d warning checks failing", summary.WarningFailing)
-	} else {
-		degradedCondition.Status = metav1.ConditionFalse
-		degradedCondition.Reason = "NoWarnings"
-		degradedCondition.Message = "All warning checks passing"
-	}
-	meta.SetStatusCondition(&cr.Status.Conditions, degradedCondition)
 
 	if err := r.Status().Update(ctx, &cr); err != nil {
 		logger.Error(err, "failed to update ClusterReadiness status")
@@ -437,11 +431,13 @@ type checkResult struct {
 
 // categoryAgg is a helper for accumulating per-category statistics.
 type categoryAgg struct {
-	category string
-	ready    bool
-	total    int
-	passing  int
-	failing  int
+	category        string
+	criticalFailing bool
+	warningFailing  bool
+	total           int
+	passing         int
+	failing         int
+	checks          []clustergatev1alpha1.CheckStatus
 }
 
 // aggregateCheck updates summary and category aggregation for a single check result.
@@ -468,7 +464,7 @@ func aggregateCheck(summary *clustergatev1alpha1.ReadinessSummary, categoryMap m
 
 	agg, exists := categoryMap[category]
 	if !exists {
-		agg = &categoryAgg{category: category, ready: true}
+		agg = &categoryAgg{category: category}
 		categoryMap[category] = agg
 	}
 	agg.total++
@@ -477,7 +473,9 @@ func aggregateCheck(summary *clustergatev1alpha1.ReadinessSummary, categoryMap m
 	} else {
 		agg.failing++
 		if clustergatev1alpha1.Severity(severity) == clustergatev1alpha1.SeverityCritical {
-			agg.ready = false
+			agg.criticalFailing = true
+		} else if clustergatev1alpha1.Severity(severity) == clustergatev1alpha1.SeverityWarning {
+			agg.warningFailing = true
 		}
 	}
 }

@@ -128,24 +128,65 @@ spec:
           status:
             description: ClusterReadinessStatus defines the observed state of ClusterReadiness.
             properties:
-              categorySummaries:
-                description: CategorySummaries provides per-category aggregation.
+              categories:
+                description: Categories provides per-category check results and aggregation.
                 items:
-                  description: CategorySummary aggregates check results for one category.
+                  description: CategoryStatus aggregates check results and details
+                    for one category.
                   properties:
                     category:
                       description: Category name.
                       type: string
+                    checks:
+                      description: Checks contains the individual check results in
+                        this category.
+                      items:
+                        description: CheckStatus reports the result of a single readiness
+                          check.
+                        properties:
+                          lastChecked:
+                            description: LastChecked is when this check was last evaluated.
+                            format: date-time
+                            type: string
+                          message:
+                            description: Message is a human-readable description of
+                              the check result.
+                            type: string
+                          name:
+                            description: Name matches the check identifier (built-in
+                              name or GateCheck ref).
+                            type: string
+                          severity:
+                            description: Severity of this check.
+                            enum:
+                            - critical
+                            - warning
+                            - info
+                            type: string
+                          source:
+                            description: 'Source indicates where this check originated:
+                              "builtin", "dynamic", or "profile:<name>".'
+                            type: string
+                          status:
+                            description: Status indicates whether this check is Passing
+                              or Failing.
+                            type: string
+                        required:
+                        - name
+                        - severity
+                        - status
+                        type: object
+                      type: array
                     failing:
                       description: Failing checks in this category.
                       type: integer
                     passing:
                       description: Passing checks in this category.
                       type: integer
-                    ready:
-                      description: Ready indicates all critical checks in this category
-                        are passing.
-                      type: boolean
+                    state:
+                      description: 'State indicates the health of this category: Healthy,
+                        Degraded, or Unhealthy.'
+                      type: string
                     total:
                       description: Total number of checks in this category.
                       type: integer
@@ -153,50 +194,8 @@ spec:
                   - category
                   - failing
                   - passing
-                  - ready
+                  - state
                   - total
-                  type: object
-                type: array
-              checks:
-                description: Checks contains the per-check results.
-                items:
-                  description: CheckStatus reports the result of a single readiness
-                    check.
-                  properties:
-                    category:
-                      description: Category of this check.
-                      type: string
-                    lastChecked:
-                      description: LastChecked is when this check was last evaluated.
-                      format: date-time
-                      type: string
-                    message:
-                      description: Message is a human-readable description of the
-                        check result.
-                      type: string
-                    name:
-                      description: Name matches the check identifier (built-in name
-                        or GateCheck ref).
-                      type: string
-                    ready:
-                      description: Ready indicates whether this check is passing.
-                      type: boolean
-                    severity:
-                      description: Severity of this check.
-                      enum:
-                      - critical
-                      - warning
-                      - info
-                      type: string
-                    source:
-                      description: 'Source indicates where this check originated:
-                        "builtin", "dynamic", or "profile:<name>".'
-                      type: string
-                  required:
-                  - category
-                  - name
-                  - ready
-                  - severity
                   type: object
                 type: array
               conditions:

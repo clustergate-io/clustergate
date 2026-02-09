@@ -149,9 +149,8 @@ func TestCheckScheduleCarriedStatusIntegrity(t *testing.T) {
 	existing := []clustergatev1alpha1.CheckStatus{
 		{
 			Name:        "dns",
-			Ready:       true,
+			Status:      "Passing",
 			Severity:    clustergatev1alpha1.SeverityCritical,
-			Category:    "networking",
 			Message:     "DNS operational",
 			LastChecked: timePtr(lastChecked),
 		},
@@ -167,14 +166,11 @@ func TestCheckScheduleCarriedStatusIntegrity(t *testing.T) {
 	if cs.Name != "dns" {
 		t.Errorf("carried name = %q, want %q", cs.Name, "dns")
 	}
-	if cs.Ready != true {
-		t.Errorf("carried ready = %v, want true", cs.Ready)
+	if cs.Status != "Passing" {
+		t.Errorf("carried status = %q, want %q", cs.Status, "Passing")
 	}
 	if cs.Severity != clustergatev1alpha1.SeverityCritical {
 		t.Errorf("carried severity = %q, want %q", cs.Severity, clustergatev1alpha1.SeverityCritical)
-	}
-	if cs.Category != "networking" {
-		t.Errorf("carried category = %q, want %q", cs.Category, "networking")
 	}
 	if cs.Message != "DNS operational" {
 		t.Errorf("carried message = %q, want %q", cs.Message, "DNS operational")
