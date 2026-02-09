@@ -15,9 +15,9 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.ready
-      name: Ready
-      type: boolean
+    - jsonPath: .status.state
+      name: State
+      type: string
     - jsonPath: .status.summary.passing
       name: Passing
       type: integer
@@ -111,6 +111,12 @@ spec:
                 items:
                   description: ProfileRef references a GateProfile CR by name.
                   properties:
+                    excludeChecks:
+                      description: ExcludeChecks is a list of check names or gateCheckRefs
+                        to exclude from this profile.
+                      items:
+                        type: string
+                      type: array
                     name:
                       description: Name is the metadata.name of the GateProfile CR.
                       type: string
@@ -255,10 +261,17 @@ spec:
                 description: LastChecked is the last time any check was evaluated.
                 format: date-time
                 type: string
-              ready:
-                description: Ready indicates whether all critical-severity checks
-                  are passing.
-                type: boolean
+              state:
+                description: |-
+                  State is the overall cluster health: Healthy, Degraded, or Unhealthy.
+                  Healthy means all checks are passing.
+                  Degraded means all critical checks pass but one or more warning checks are failing.
+                  Unhealthy means one or more critical checks are failing.
+                enum:
+                - Healthy
+                - Degraded
+                - Unhealthy
+                type: string
               summary:
                 description: Summary provides aggregated counts across all checks.
                 properties:
@@ -295,8 +308,6 @@ spec:
                 - warningFailing
                 - warningTotal
                 type: object
-            required:
-            - ready
             type: object
         type: object
     served: true

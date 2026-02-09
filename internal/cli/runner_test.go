@@ -32,8 +32,8 @@ func TestRunChecks_AllPass(t *testing.T) {
 
 	report := RunChecks(context.Background(), checkers, nil)
 
-	if !report.Ready {
-		t.Fatal("expected Ready=true")
+	if report.State != "Healthy" {
+		t.Fatalf("expected State=Healthy, got %s", report.State)
 	}
 	if report.Total != 2 {
 		t.Fatalf("expected Total=2, got %d", report.Total)
@@ -54,8 +54,8 @@ func TestRunChecks_SomeFail(t *testing.T) {
 
 	report := RunChecks(context.Background(), checkers, nil)
 
-	if report.Ready {
-		t.Fatal("expected Ready=false")
+	if report.State != "Unhealthy" {
+		t.Fatalf("expected State=Unhealthy, got %s", report.State)
 	}
 	if report.Passed != 1 {
 		t.Fatalf("expected Passed=1, got %d", report.Passed)
@@ -96,8 +96,8 @@ func TestRunChecks_CheckError(t *testing.T) {
 
 	report := RunChecks(context.Background(), checkers, nil)
 
-	if report.Ready {
-		t.Fatal("expected Ready=false when a check errors")
+	if report.State != "Unhealthy" {
+		t.Fatalf("expected State=Unhealthy when a check errors, got %s", report.State)
 	}
 	if len(report.Errors) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(report.Errors))
@@ -113,8 +113,8 @@ func TestRunChecks_CheckError(t *testing.T) {
 func TestRunChecks_Empty(t *testing.T) {
 	report := RunChecks(context.Background(), nil, nil)
 
-	if !report.Ready {
-		t.Fatal("expected Ready=true for empty check list")
+	if report.State != "Healthy" {
+		t.Fatalf("expected State=Healthy for empty check list, got %s", report.State)
 	}
 	if report.Total != 0 {
 		t.Fatalf("expected Total=0, got %d", report.Total)

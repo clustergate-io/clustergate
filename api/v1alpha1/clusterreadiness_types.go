@@ -76,9 +76,6 @@ func (c *CheckSpec) IsEnabled() bool {
 
 // ClusterReadinessStatus defines the observed state of ClusterReadiness.
 type ClusterReadinessStatus struct {
-	// Ready indicates whether all critical-severity checks are passing.
-	Ready bool `json:"ready"`
-
 	// State is the overall cluster health: Healthy, Degraded, or Unhealthy.
 	// Healthy means all checks are passing.
 	// Degraded means all critical checks pass but one or more warning checks are failing.
@@ -180,7 +177,6 @@ type CheckStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
-// +kubebuilder:printcolumn:name="Ready",type=boolean,JSONPath=`.status.ready`
 // +kubebuilder:printcolumn:name="Passing",type=integer,JSONPath=`.status.summary.passing`
 // +kubebuilder:printcolumn:name="Failing",type=integer,JSONPath=`.status.summary.failing`
 // +kubebuilder:printcolumn:name="Total",type=integer,JSONPath=`.status.summary.total`

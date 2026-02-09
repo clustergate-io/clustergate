@@ -267,10 +267,9 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Update health server state.
-	r.ReadinessState.Update(req.Name, allCriticalReady, string(healthState), healthChecks, healthSummary, healthCategorySummaries)
+	r.ReadinessState.Update(req.Name, string(healthState), healthChecks, healthSummary, healthCategorySummaries)
 
 	// Update CR status.
-	cr.Status.Ready = allCriticalReady
 	cr.Status.State = healthState
 	cr.Status.LastChecked = &now
 	cr.Status.Checks = checkStatuses
@@ -316,7 +315,7 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	logger.Info("reconciliation complete",
-		"ready", allCriticalReady,
+		"state", healthState,
 		"total", summary.Total,
 		"criticalPassing", summary.CriticalPassing,
 		"criticalTotal", summary.CriticalTotal,

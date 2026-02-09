@@ -6,3 +6,4 @@ bin/
 *.exe
 cover.out
 cover-integration.out
+clustergate

@@ -22,10 +22,10 @@ func NewCloudControllerManagerCheck(c client.Client) *CloudControllerManagerChec
 	return &CloudControllerManagerCheck{client: c}
 }
 
-func (ccm *CloudControllerManagerCheck) Name() string            { return CloudControllerManagerCheckName }
-func (ccm *CloudControllerManagerCheck) DefaultSeverity() string { return "critical" }
-func (ccm *CloudControllerManagerCheck) DefaultCategory() string { return "control-plane" }
+func (c *CloudControllerManagerCheck) Name() string            { return CloudControllerManagerCheckName }
+func (c *CloudControllerManagerCheck) DefaultSeverity() string { return "critical" }
+func (c *CloudControllerManagerCheck) DefaultCategory() string { return "control-plane" }
 
-func (ccm *CloudControllerManagerCheck) Run(ctx context.Context, rawConfig json.RawMessage) (checks.Result, error) {
-	return checkLease(ctx, ccm.client, rawConfig, "cloud-controller-manager", CloudControllerManagerCheckName)
+func (c *CloudControllerManagerCheck) Run(ctx context.Context, rawConfig json.RawMessage) (checks.Result, error) {
+	return checkLease(ctx, c.client, rawConfig, "cloud-controller-manager", CloudControllerManagerCheckName)
 }

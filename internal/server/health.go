@@ -14,7 +14,6 @@ type ReadinessState struct {
 
 // ClusterState represents readiness for a single ClusterReadiness CR.
 type ClusterState struct {
-	Ready             bool                   `json:"ready"`
 	State             string                 `json:"state"`
 	Summary           *ReadinessSummaryView  `json:"summary,omitempty"`
 	CategorySummaries []CategorySummaryView  `json:"categorySummaries,omitempty"`
@@ -56,11 +55,10 @@ func NewReadinessState() *ReadinessState {
 }
 
 // Update sets the readiness state for a given ClusterReadiness CR.
-func (rs *ReadinessState) Update(name string, ready bool, state string, checks map[string]*CheckState, summary *ReadinessSummaryView, categorySummaries []CategorySummaryView) {
+func (rs *ReadinessState) Update(name string, state string, checks map[string]*CheckState, summary *ReadinessSummaryView, categorySummaries []CategorySummaryView) {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 	rs.states[name] = &ClusterState{
-		Ready:             ready,
 		State:             state,
 		Summary:           summary,
 		CategorySummaries: categorySummaries,
@@ -84,7 +82,7 @@ func (rs *ReadinessState) IsReady() bool {
 		return false
 	}
 	for _, state := range rs.states {
-		if !state.Ready {
+		if state.State == "Unhealthy" {
 			return false
 		}
 	}
@@ -120,27 +118,34 @@ func ReadyzHandler(state *ReadinessState) http.HandlerFunc {
 			snap = filterSnapshot(snap, categoryFilter, severityFilter)
 		}
 
-		ready := true
-		if len(snap) == 0 {
-			ready = false
-		}
+		healthy := len(snap) > 0
 		for _, cs := range snap {
-			if !cs.Ready {
-				ready = false
+			if cs.State == "Unhealthy" {
+				healthy = false
 				break
 			}
 		}
 
 		resp := struct {
-			Ready    bool                     `json:"ready"`
+			State    string                   `json:"state"`
 			Clusters map[string]*ClusterState `json:"clusters,omitempty"`
 		}{
-			Ready:    ready,
 			Clusters: snap,
+		}
+		if !healthy {
+			resp.State = "Unhealthy"
+		} else {
+			// Use worst state across clusters
+			resp.State = "Healthy"
+			for _, cs := range snap {
+				if cs.State == "Degraded" {
+					resp.State = "Degraded"
+				}
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		if ready {
+		if healthy {
 			w.WriteHeader(http.StatusOK)
 		} else {
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -165,17 +170,23 @@ func filterSnapshot(snap map[string]*ClusterState, categoryFilter, severityFilte
 			filteredChecks[checkName] = check
 		}
 
-		// Recompute readiness from filtered checks
-		clusterReady := len(filteredChecks) > 0
+		// Recompute state from filtered checks
+		state := "Healthy"
 		for _, check := range filteredChecks {
 			if !check.Ready && check.Severity == "critical" {
-				clusterReady = false
+				state = "Unhealthy"
 				break
 			}
+			if !check.Ready && check.Severity == "warning" {
+				state = "Degraded"
+			}
+		}
+		if len(filteredChecks) == 0 {
+			state = "Unhealthy"
 		}
 
 		filtered[crName] = &ClusterState{
-			Ready:  clusterReady,
+			State:  state,
 			Checks: filteredChecks,
 		}
 	}

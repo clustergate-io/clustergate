@@ -9,7 +9,6 @@ import (
 
 func TestFormatText_AllPass(t *testing.T) {
 	report := &Report{
-		Ready:  true,
 		State:  "Healthy",
 		Total:  2,
 		Passed: 2,
@@ -43,7 +42,6 @@ func TestFormatText_AllPass(t *testing.T) {
 
 func TestFormatText_SomeFail(t *testing.T) {
 	report := &Report{
-		Ready:  false,
 		State:  "Unhealthy",
 		Total:  2,
 		Passed: 1,
@@ -74,7 +72,6 @@ func TestFormatText_SomeFail(t *testing.T) {
 
 func TestFormatText_WithErrors(t *testing.T) {
 	report := &Report{
-		Ready:  false,
 		State:  "Unhealthy",
 		Total:  1,
 		Passed: 0,
@@ -100,7 +97,7 @@ func TestFormatText_WithErrors(t *testing.T) {
 }
 
 func TestFormatText_Empty(t *testing.T) {
-	report := &Report{Ready: true, State: "Healthy"}
+	report := &Report{State: "Healthy"}
 
 	var buf bytes.Buffer
 	FormatText(&buf, report)
@@ -116,7 +113,6 @@ func TestFormatText_Empty(t *testing.T) {
 
 func TestFormatJSON_AllPass(t *testing.T) {
 	report := &Report{
-		Ready:  true,
 		State:  "Healthy",
 		Total:  1,
 		Passed: 1,
@@ -135,8 +131,8 @@ func TestFormatJSON_AllPass(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
 		t.Fatalf("failed to parse JSON output: %v", err)
 	}
-	if !parsed.Ready {
-		t.Error("expected ready=true in JSON")
+	if parsed.State != "Healthy" {
+		t.Errorf("expected state=Healthy in JSON, got %s", parsed.State)
 	}
 	if len(parsed.Checks) != 1 {
 		t.Errorf("expected 1 check, got %d", len(parsed.Checks))
@@ -145,7 +141,6 @@ func TestFormatJSON_AllPass(t *testing.T) {
 
 func TestFormatJSON_SomeFail(t *testing.T) {
 	report := &Report{
-		Ready:  false,
 		State:  "Unhealthy",
 		Total:  2,
 		Passed: 1,
@@ -165,8 +160,8 @@ func TestFormatJSON_SomeFail(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
 		t.Fatalf("failed to parse JSON output: %v", err)
 	}
-	if parsed.Ready {
-		t.Error("expected ready=false in JSON")
+	if parsed.State != "Unhealthy" {
+		t.Errorf("expected state=Unhealthy in JSON, got %s", parsed.State)
 	}
 	if parsed.Failed != 1 {
 		t.Errorf("expected failed=1, got %d", parsed.Failed)
@@ -174,7 +169,7 @@ func TestFormatJSON_SomeFail(t *testing.T) {
 }
 
 func TestFormatJSON_Indented(t *testing.T) {
-	report := &Report{Ready: true, State: "Healthy", Total: 1, Passed: 1, Checks: []CheckResult{
+	report := &Report{State: "Healthy", Total: 1, Passed: 1, Checks: []CheckResult{
 		{Name: "dns", Ready: true, Message: "ok"},
 	}}
 
@@ -190,7 +185,6 @@ func TestFormatJSON_Indented(t *testing.T) {
 
 func TestFormatText_CategoryAndSeverity(t *testing.T) {
 	report := &Report{
-		Ready:  true,
 		State:  "Healthy",
 		Total:  1,
 		Passed: 1,

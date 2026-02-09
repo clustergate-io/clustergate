@@ -22,16 +22,16 @@ import (
 
 func main() {
 	var (
-		kubeconfig string
-		outputFmt  string
-		checkNames string
-		enableCCM  bool
+		kubeconfig                   string
+		outputFmt                    string
+		checkNames                   string
+		enableCloudControllerManager bool
 	)
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to kubeconfig file (uses in-cluster config if empty)")
 	flag.StringVar(&outputFmt, "output", "text", "Output format: text or json")
 	flag.StringVar(&checkNames, "checks", "", "Comma-separated list of checks to run (default: all)")
-	flag.BoolVar(&enableCCM, "enable-ccm", false, "Enable cloud-controller-manager check")
+	flag.BoolVar(&enableCloudControllerManager, "enable-cloud-controller-manager", false, "Enable cloud-controller-manager check")
 	flag.Parse()
 
 	cfg, err := loadConfig(kubeconfig)
@@ -50,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	builtin.RegisterAll(c, cfg, enableCCM)
+	builtin.RegisterControlPlane(c, cfg, enableCloudControllerManager)
 
 	filter := make(map[string]bool)
 	if checkNames != "" {
@@ -72,7 +72,7 @@ func main() {
 		cli.FormatText(os.Stdout, report)
 	}
 
-	if !report.Ready {
+	if report.State == "Unhealthy" {
 		os.Exit(1)
 	}
 }

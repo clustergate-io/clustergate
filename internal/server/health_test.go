@@ -21,30 +21,30 @@ func TestReadinessState_IsReady(t *testing.T) {
 		{
 			name: "single ready cluster",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
+				rs.Update("cluster-1", "Healthy", nil, nil, nil)
 			},
 			want: true,
 		},
 		{
 			name: "two ready clusters",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
-				rs.Update("cluster-2", true, "Healthy", nil, nil, nil)
+				rs.Update("cluster-1", "Healthy", nil, nil, nil)
+				rs.Update("cluster-2", "Healthy", nil, nil, nil)
 			},
 			want: true,
 		},
 		{
 			name: "one ready one not ready",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
-				rs.Update("cluster-2", false, "Unhealthy", nil, nil, nil)
+				rs.Update("cluster-1", "Healthy", nil, nil, nil)
+				rs.Update("cluster-2", "Unhealthy", nil, nil, nil)
 			},
 			want: false,
 		},
 		{
 			name: "single not ready cluster",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", false, "Unhealthy", nil, nil, nil)
+				rs.Update("cluster-1", "Unhealthy", nil, nil, nil)
 			},
 			want: false,
 		},
@@ -63,8 +63,8 @@ func TestReadinessState_IsReady(t *testing.T) {
 
 func TestReadinessState_Remove(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
-	rs.Update("cluster-2", false, "Unhealthy", nil, nil, nil)
+	rs.Update("cluster-1", "Healthy", nil, nil, nil)
+	rs.Update("cluster-2", "Unhealthy", nil, nil, nil)
 
 	// Not ready because cluster-2 is failing
 	if rs.IsReady() {
@@ -88,7 +88,7 @@ func TestReadinessState_Remove(t *testing.T) {
 
 func TestReadyzHandler_Ready(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", true, "Healthy", map[string]*CheckState{
+	rs.Update("test-cluster", "Healthy", map[string]*CheckState{
 		"dns": {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
 	}, &ReadinessSummaryView{Total: 1, Passing: 1}, nil)
 
@@ -102,14 +102,14 @@ func TestReadyzHandler_Ready(t *testing.T) {
 	}
 
 	var resp struct {
-		Ready    bool                     `json:"ready"`
+		State    string                   `json:"state"`
 		Clusters map[string]*ClusterState `json:"clusters"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
-	if !resp.Ready {
-		t.Error("expected ready=true in response")
+	if resp.State != "Healthy" {
+		t.Errorf("expected state=Healthy, got %s", resp.State)
 	}
 	if len(resp.Clusters) != 1 {
 		t.Errorf("expected 1 cluster, got %d", len(resp.Clusters))
@@ -118,7 +118,7 @@ func TestReadyzHandler_Ready(t *testing.T) {
 
 func TestReadyzHandler_NotReady(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", false, "Unhealthy", map[string]*CheckState{
+	rs.Update("test-cluster", "Unhealthy", map[string]*CheckState{
 		"dns": {Ready: false, Message: "failing", Severity: "critical", Category: "networking"},
 	}, nil, nil)
 
@@ -132,13 +132,13 @@ func TestReadyzHandler_NotReady(t *testing.T) {
 	}
 
 	var resp struct {
-		Ready bool `json:"ready"`
+		State string `json:"state"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
-	if resp.Ready {
-		t.Error("expected ready=false in response")
+	if resp.State != "Unhealthy" {
+		t.Errorf("expected state=Unhealthy, got %s", resp.State)
 	}
 }
 
@@ -156,7 +156,7 @@ func TestReadyzHandler_Empty(t *testing.T) {
 
 func TestReadyzHandler_CategoryFilter(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", true, "Healthy", map[string]*CheckState{
+	rs.Update("test-cluster", "Healthy", map[string]*CheckState{
 		"dns":     {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
 		"ingress": {Ready: false, Message: "failing", Severity: "critical", Category: "networking"},
 		"vault":   {Ready: true, Message: "ok", Severity: "critical", Category: "security"},
@@ -173,7 +173,7 @@ func TestReadyzHandler_CategoryFilter(t *testing.T) {
 	}
 
 	var resp struct {
-		Ready    bool                     `json:"ready"`
+		State    string                   `json:"state"`
 		Clusters map[string]*ClusterState `json:"clusters"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
@@ -194,7 +194,7 @@ func TestReadyzHandler_CategoryFilter(t *testing.T) {
 
 func TestReadyzHandler_SeverityFilter(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", false, "Degraded", map[string]*CheckState{
+	rs.Update("test-cluster", "Degraded", map[string]*CheckState{
 		"dns":     {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
 		"logging": {Ready: false, Message: "degraded", Severity: "warning", Category: "observability"},
 	}, nil, nil)
@@ -225,7 +225,7 @@ func TestReadyzHandler_SeverityFilter(t *testing.T) {
 func TestFilterSnapshot(t *testing.T) {
 	snap := map[string]*ClusterState{
 		"cluster-1": {
-			Ready: true,
+			State: "Healthy",
 			Checks: map[string]*CheckState{
 				"dns":     {Ready: true, Severity: "critical", Category: "networking"},
 				"ingress": {Ready: false, Severity: "critical", Category: "networking"},
@@ -240,8 +240,8 @@ func TestFilterSnapshot(t *testing.T) {
 		if len(cs.Checks) != 1 {
 			t.Errorf("expected 1 check, got %d", len(cs.Checks))
 		}
-		if !cs.Ready {
-			t.Error("expected cluster ready (only warning checks in security)")
+		if cs.State != "Healthy" {
+			t.Errorf("expected state=Healthy (only warning checks in security), got %s", cs.State)
 		}
 	})
 
@@ -251,8 +251,8 @@ func TestFilterSnapshot(t *testing.T) {
 		if len(cs.Checks) != 2 {
 			t.Errorf("expected 2 checks, got %d", len(cs.Checks))
 		}
-		if cs.Ready {
-			t.Error("expected cluster not ready (ingress critical is failing)")
+		if cs.State != "Unhealthy" {
+			t.Errorf("expected state=Unhealthy (ingress critical is failing), got %s", cs.State)
 		}
 	})
 

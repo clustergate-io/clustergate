@@ -25,7 +25,6 @@ type CheckError struct {
 
 // Report holds the aggregate result of running all checks.
 type Report struct {
-	Ready  bool          `json:"ready"`
 	State  string        `json:"state"`
 	Total  int           `json:"total"`
 	Passed int           `json:"passed"`
@@ -37,7 +36,7 @@ type Report struct {
 // RunChecks executes the given checkers and returns a Report.
 // If filter is non-empty, only checks whose names are in filter are executed.
 func RunChecks(ctx context.Context, checkers []checks.Checker, filter map[string]bool) *Report {
-	report := &Report{Ready: true, State: "Healthy"}
+	report := &Report{State: "Healthy"}
 
 	// Sort checkers by name for deterministic output.
 	sorted := make([]checks.Checker, len(checkers))
@@ -62,7 +61,6 @@ func RunChecks(ctx context.Context, checkers []checks.Checker, filter map[string
 				Name:  c.Name(),
 				Error: err.Error(),
 			})
-			report.Ready = false
 			report.Failed++
 			hasCriticalFailure = true
 			continue
@@ -82,7 +80,6 @@ func RunChecks(ctx context.Context, checkers []checks.Checker, filter map[string
 		} else {
 			report.Failed++
 			if c.DefaultSeverity() == "critical" {
-				report.Ready = false
 				hasCriticalFailure = true
 			} else if c.DefaultSeverity() == "warning" {
 				hasWarningFailure = true
