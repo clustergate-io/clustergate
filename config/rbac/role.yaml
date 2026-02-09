@@ -4,6 +4,15 @@ kind: ClusterRole
 metadata:
   name: clustergate-controller
 rules:
+- nonResourceURLs:
+  - /healthz
+  - /healthz/*
+  - /livez
+  - /livez/*
+  - /readyz
+  - /readyz/*
+  verbs:
+  - get
 - apiGroups:
   - ""
   resources:
@@ -45,9 +54,7 @@ rules:
 - apiGroups:
   - clustergate.io
   resources:
-  - clusterreadiness
-  - gatechecks
-  - gateprofiles
+  - clusterreadinesses
   verbs:
   - get
   - list
@@ -55,13 +62,26 @@ rules:
 - apiGroups:
   - clustergate.io
   resources:
-  - clusterreadiness/status
+  - clusterreadinesses/status
   - gatechecks/status
   - gateprofiles/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - clustergate.io
+  resources:
+  - gatechecks
+  - gateprofiles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - coordination.k8s.io
   resources:

@@ -52,6 +52,7 @@ spec:
       containers:
         - name: manager
           image: clustergate:latest
+          imagePullPolicy: IfNotPresent
           args:
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081

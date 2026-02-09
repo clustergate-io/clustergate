@@ -4,3 +4,5 @@ tmpclaude-*
 # Ignore build artifacts and binaries
 bin/
 *.exe
+cover.out
+cover-integration.out

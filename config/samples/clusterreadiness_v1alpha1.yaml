@@ -7,36 +7,11 @@ spec:
   # Reference a profile for baseline checks
   profiles:
     - name: production-baseline
-  checks:
-    # Built-in control plane checks
-    - name: kube-apiserver
-      enabled: true
-      severity: critical
-      category: control-plane
-    - name: etcd
-      enabled: true
-      severity: critical
-      category: control-plane
-    - name: kube-scheduler
-      enabled: true
-      severity: critical
-      category: control-plane
-    - name: kube-controller-manager
-      enabled: true
-      severity: critical
-      category: control-plane
-    # Built-in DNS check
-    - name: dns
-      enabled: true
-      severity: critical
-      category: networking
-      config:
-        testDomain: "kubernetes.default.svc.cluster.local"
-    # Dynamic check referencing a GateCheck CR
-    - gateCheckRef: istiod-ready
-      severity: critical
-      category: networking
-    # Dynamic check with overridden severity
-    - gateCheckRef: vault-health
-      severity: warning
-      category: security
+  # Only add cluster-specific checks inline — profile handles the baseline
+  # checks:
+  #   - gateCheckRef: istiod-ready
+  #     severity: critical
+  #     category: networking
+  #   - gateCheckRef: vault-health
+  #     severity: warning
+  #     category: security

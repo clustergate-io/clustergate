@@ -25,6 +25,10 @@ type ClusterReadinessSpec struct {
 type ProfileRef struct {
 	// Name is the metadata.name of the GateProfile CR.
 	Name string `json:"name"`
+
+	// ExcludeChecks is a list of check names or gateCheckRefs to exclude from this profile.
+	// +optional
+	ExcludeChecks []string `json:"excludeChecks,omitempty"`
 }
 
 // CheckSpec defines a single readiness check to run.
@@ -169,6 +173,10 @@ type CheckStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Ready",type=boolean,JSONPath=`.status.ready`
+// +kubebuilder:printcolumn:name="Passing",type=integer,JSONPath=`.status.summary.passing`
+// +kubebuilder:printcolumn:name="Failing",type=integer,JSONPath=`.status.summary.failing`
+// +kubebuilder:printcolumn:name="Total",type=integer,JSONPath=`.status.summary.total`
+// +kubebuilder:printcolumn:name="Last Checked",type=date,JSONPath=`.status.lastChecked`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterReadiness is the Schema for the clusterreadiness API.

@@ -1,0 +1,305 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: clusterreadinesses.clustergate.io
+spec:
+  group: clustergate.io
+  names:
+    kind: ClusterReadiness
+    listKind: ClusterReadinessList
+    plural: clusterreadinesses
+    singular: clusterreadiness
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    - jsonPath: .status.summary.passing
+      name: Passing
+      type: integer
+    - jsonPath: .status.summary.failing
+      name: Failing
+      type: integer
+    - jsonPath: .status.summary.total
+      name: Total
+      type: integer
+    - jsonPath: .status.lastChecked
+      name: Last Checked
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ClusterReadiness is the Schema for the clusterreadiness API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterReadinessSpec defines the desired state of ClusterReadiness.
+            properties:
+              checks:
+                description: |-
+                  Checks is the list of inline readiness checks to run.
+                  Inline checks override profile checks with the same name/ref.
+                items:
+                  description: CheckSpec defines a single readiness check to run.
+                  properties:
+                    category:
+                      description: Category overrides the check's default category.
+                      type: string
+                    config:
+                      description: |-
+                        Config holds check-specific configuration as arbitrary JSON.
+                        Only applicable for built-in checks.
+                      x-kubernetes-preserve-unknown-fields: true
+                    enabled:
+                      description: Enabled controls whether this check is active.
+                      type: boolean
+                    gateCheckRef:
+                      description: |-
+                        GateCheckRef references a GateCheck CR by metadata.name.
+                        Mutually exclusive with Name.
+                      type: string
+                    interval:
+                      description: Interval overrides the default interval for this
+                        specific check.
+                      type: string
+                    name:
+                      description: |-
+                        Name is the identifier for a built-in check (e.g. "dns").
+                        Mutually exclusive with GateCheckRef.
+                      type: string
+                    severity:
+                      description: |-
+                        Severity overrides the check's default severity.
+                        Defaults to "critical" for built-in checks, or the GateCheck's severity.
+                      enum:
+                      - critical
+                      - warning
+                      - info
+                      type: string
+                  type: object
+                type: array
+              interval:
+                description: Interval is the default interval for checks that don't
+                  specify their own (e.g. "60s", "5m").
+                type: string
+              profiles:
+                description: Profiles references GateProfile CRs to include in this
+                  readiness evaluation.
+                items:
+                  description: ProfileRef references a GateProfile CR by name.
+                  properties:
+                    name:
+                      description: Name is the metadata.name of the GateProfile CR.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            type: object
+          status:
+            description: ClusterReadinessStatus defines the observed state of ClusterReadiness.
+            properties:
+              categorySummaries:
+                description: CategorySummaries provides per-category aggregation.
+                items:
+                  description: CategorySummary aggregates check results for one category.
+                  properties:
+                    category:
+                      description: Category name.
+                      type: string
+                    failing:
+                      description: Failing checks in this category.
+                      type: integer
+                    passing:
+                      description: Passing checks in this category.
+                      type: integer
+                    ready:
+                      description: Ready indicates all critical checks in this category
+                        are passing.
+                      type: boolean
+                    total:
+                      description: Total number of checks in this category.
+                      type: integer
+                  required:
+                  - category
+                  - failing
+                  - passing
+                  - ready
+                  - total
+                  type: object
+                type: array
+              checks:
+                description: Checks contains the per-check results.
+                items:
+                  description: CheckStatus reports the result of a single readiness
+                    check.
+                  properties:
+                    category:
+                      description: Category of this check.
+                      type: string
+                    lastChecked:
+                      description: LastChecked is when this check was last evaluated.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message is a human-readable description of the
+                        check result.
+                      type: string
+                    name:
+                      description: Name matches the check identifier (built-in name
+                        or GateCheck ref).
+                      type: string
+                    ready:
+                      description: Ready indicates whether this check is passing.
+                      type: boolean
+                    severity:
+                      description: Severity of this check.
+                      enum:
+                      - critical
+                      - warning
+                      - info
+                      type: string
+                    source:
+                      description: 'Source indicates where this check originated:
+                        "builtin", "dynamic", or "profile:<name>".'
+                      type: string
+                  required:
+                  - category
+                  - name
+                  - ready
+                  - severity
+                  type: object
+                type: array
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the resource's state.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              lastChecked:
+                description: LastChecked is the last time any check was evaluated.
+                format: date-time
+                type: string
+              ready:
+                description: Ready indicates whether all critical-severity checks
+                  are passing.
+                type: boolean
+              summary:
+                description: Summary provides aggregated counts across all checks.
+                properties:
+                  criticalPassing:
+                    description: CriticalPassing is the number of critical checks
+                      currently passing.
+                    type: integer
+                  criticalTotal:
+                    description: CriticalTotal is the number of critical-severity
+                      checks.
+                    type: integer
+                  failing:
+                    description: Failing is the number of checks currently failing.
+                    type: integer
+                  passing:
+                    description: Passing is the number of checks currently passing.
+                    type: integer
+                  total:
+                    description: Total is the total number of enabled checks.
+                    type: integer
+                  warningFailing:
+                    description: WarningFailing is the number of warning checks currently
+                      failing.
+                    type: integer
+                  warningTotal:
+                    description: WarningTotal is the number of warning-severity checks.
+                    type: integer
+                required:
+                - criticalPassing
+                - criticalTotal
+                - failing
+                - passing
+                - total
+                - warningFailing
+                - warningTotal
+                type: object
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

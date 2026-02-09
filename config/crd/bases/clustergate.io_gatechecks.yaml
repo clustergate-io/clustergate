@@ -1,0 +1,559 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+  name: gatechecks.clustergate.io
+spec:
+  group: clustergate.io
+  names:
+    kind: GateCheck
+    listKind: GateCheckList
+    plural: gatechecks
+    shortNames:
+    - gchk
+    singular: gatecheck
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.severity
+      name: Severity
+      type: string
+    - jsonPath: .spec.category
+      name: Category
+      type: string
+    - jsonPath: .spec.description
+      name: Type
+      priority: 1
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: GateCheck is the Schema for the gatechecks API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              GateCheckSpec defines the desired state of GateCheck.
+              Exactly one check type must be specified.
+            properties:
+              category:
+                description: Category groups related checks for filtering and reporting.
+                type: string
+              description:
+                description: Description is a human-readable description of what this
+                  check validates.
+                type: string
+              httpCheck:
+                description: HTTPCheck performs an HTTP request and validates the
+                  response status code.
+                properties:
+                  expectedStatusCodes:
+                    description: ExpectedStatusCodes is the list of acceptable HTTP
+                      status codes.
+                    items:
+                      type: integer
+                    type: array
+                  headers:
+                    additionalProperties:
+                      type: string
+                    description: Headers to include in the request.
+                    type: object
+                  insecureSkipTLSVerify:
+                    description: InsecureSkipTLSVerify disables TLS certificate verification.
+                    type: boolean
+                  method:
+                    default: GET
+                    description: Method is the HTTP method to use.
+                    type: string
+                  timeoutSeconds:
+                    default: 10
+                    description: TimeoutSeconds is the request timeout.
+                    format: int32
+                    type: integer
+                  url:
+                    description: URL is the HTTP endpoint to probe.
+                    type: string
+                required:
+                - url
+                type: object
+              interval:
+                description: Interval overrides the default check interval.
+                type: string
+              podCheck:
+                description: PodCheck verifies that pods matching a label selector
+                  are running and ready.
+                properties:
+                  labelSelector:
+                    description: LabelSelector selects the pods to check.
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector
+                          requirements. The requirements are ANDed.
+                        items:
+                          description: |-
+                            A label selector requirement is a selector that contains values, a key, and an operator that
+                            relates the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector
+                                applies to.
+                              type: string
+                            operator:
+                              description: |-
+                                operator represents a key's relationship to a set of values.
+                                Valid operators are In, NotIn, Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: |-
+                                values is an array of string values. If the operator is In or NotIn,
+                                the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                the values array must be empty. This array is replaced during a strategic
+                                merge patch.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                          map is equivalent to an element of matchExpressions, whose key field is "key", the
+                          operator is "In", and the values array contains only "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  minReady:
+                    default: 1
+                    description: MinReady is the minimum number of ready pods required
+                      for the check to pass.
+                    format: int32
+                    type: integer
+                  namespace:
+                    description: Namespace to search for pods.
+                    type: string
+                required:
+                - namespace
+                type: object
+              promqlCheck:
+                description: PromQLCheck queries a Prometheus endpoint and evaluates
+                  the result.
+                properties:
+                  condition:
+                    description: Condition defines how to evaluate the query result.
+                    properties:
+                      operator:
+                        description: 'Operator is the comparison operator: gte, lte,
+                          eq, gt, lt.'
+                        enum:
+                        - gte
+                        - lte
+                        - eq
+                        - gt
+                        - lt
+                        type: string
+                      threshold:
+                        description: Threshold is the value to compare against.
+                        type: number
+                      type:
+                        description: Type is either "resultCount" or "value".
+                        enum:
+                        - resultCount
+                        - value
+                        type: string
+                    required:
+                    - operator
+                    - threshold
+                    - type
+                    type: object
+                  endpoint:
+                    description: Endpoint is the Prometheus server URL.
+                    type: string
+                  query:
+                    description: Query is the PromQL expression to evaluate.
+                    type: string
+                  timeoutSeconds:
+                    default: 10
+                    description: TimeoutSeconds is the query timeout.
+                    format: int32
+                    type: integer
+                required:
+                - condition
+                - endpoint
+                - query
+                type: object
+              resourceCheck:
+                description: ResourceCheck asserts conditions on any Kubernetes resource.
+                properties:
+                  apiVersion:
+                    description: APIVersion of the resource (e.g. "apps/v1").
+                    type: string
+                  conditions:
+                    description: Conditions to assert on the resource.
+                    items:
+                      description: ResourceConditionCheck defines an expected condition
+                        on a resource.
+                      properties:
+                        status:
+                          description: Status is the expected condition status (e.g.
+                            "True", "False").
+                          type: string
+                        type:
+                          description: Type is the condition type to check.
+                          type: string
+                      required:
+                      - status
+                      - type
+                      type: object
+                    type: array
+                  kind:
+                    description: Kind of the resource (e.g. "Deployment").
+                    type: string
+                  labelSelector:
+                    description: LabelSelector selects resources to check. Mutually
+                      exclusive with Name.
+                    properties:
+                      matchExpressions:
+                        description: matchExpressions is a list of label selector
+                          requirements. The requirements are ANDed.
+                        items:
+                          description: |-
+                            A label selector requirement is a selector that contains values, a key, and an operator that
+                            relates the key and values.
+                          properties:
+                            key:
+                              description: key is the label key that the selector
+                                applies to.
+                              type: string
+                            operator:
+                              description: |-
+                                operator represents a key's relationship to a set of values.
+                                Valid operators are In, NotIn, Exists and DoesNotExist.
+                              type: string
+                            values:
+                              description: |-
+                                values is an array of string values. If the operator is In or NotIn,
+                                the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                the values array must be empty. This array is replaced during a strategic
+                                merge patch.
+                              items:
+                                type: string
+                              type: array
+                              x-kubernetes-list-type: atomic
+                          required:
+                          - key
+                          - operator
+                          type: object
+                        type: array
+                        x-kubernetes-list-type: atomic
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                          map is equivalent to an element of matchExpressions, whose key field is "key", the
+                          operator is "In", and the values array contains only "value". The requirements are ANDed.
+                        type: object
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  name:
+                    description: Name of the resource. Mutually exclusive with LabelSelector.
+                    type: string
+                  namespace:
+                    description: Namespace of the resource. Empty for cluster-scoped
+                      resources.
+                    type: string
+                required:
+                - apiVersion
+                - conditions
+                - kind
+                type: object
+              scriptCheck:
+                description: ScriptCheck runs a custom script as a Kubernetes Job.
+                properties:
+                  args:
+                    description: Args are the arguments to the entrypoint.
+                    items:
+                      type: string
+                    type: array
+                  command:
+                    description: Command is the entrypoint for the container.
+                    items:
+                      type: string
+                    type: array
+                  env:
+                    description: Env is a list of environment variables for the container.
+                    items:
+                      description: EnvVar represents an environment variable present
+                        in a Container.
+                      properties:
+                        name:
+                          description: |-
+                            Name of the environment variable.
+                            May consist of any printable ASCII characters except '='.
+                          type: string
+                        value:
+                          description: |-
+                            Variable references $(VAR_NAME) are expanded
+                            using the previously defined environment variables in the container and
+                            any service environment variables. If a variable cannot be resolved,
+                            the reference in the input string will be unchanged. Double $$ are reduced
+                            to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                            "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                            Escaped references will never be expanded, regardless of whether the variable
+                            exists or not.
+                            Defaults to "".
+                          type: string
+                        valueFrom:
+                          description: Source for the environment variable's value.
+                            Cannot be used if value is not empty.
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: The key to select.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its
+                                    key must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fieldRef:
+                              description: |-
+                                Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath
+                                    is written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the
+                                    specified API version.
+                                  type: string
+                              required:
+                              - fieldPath
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fileKeyRef:
+                              description: |-
+                                FileKeyRef selects a key of the env file.
+                                Requires the EnvFiles feature gate to be enabled.
+                              properties:
+                                key:
+                                  description: |-
+                                    The key within the env file. An invalid key will prevent the pod from starting.
+                                    The keys defined within a source may consist of any printable ASCII characters except '='.
+                                    During Alpha stage of the EnvFiles feature gate, the key size is limited to 128 characters.
+                                  type: string
+                                optional:
+                                  default: false
+                                  description: |-
+                                    Specify whether the file or its key must be defined. If the file or key
+                                    does not exist, then the env var is not published.
+                                    If optional is set to true and the specified key does not exist,
+                                    the environment variable will not be set in the Pod's containers.
+
+                                    If optional is set to false and the specified key does not exist,
+                                    an error will be returned during Pod creation.
+                                  type: boolean
+                                path:
+                                  description: |-
+                                    The path within the volume from which to select the file.
+                                    Must be relative and may not contain the '..' path or start with '..'.
+                                  type: string
+                                volumeName:
+                                  description: The name of the volume mount containing
+                                    the env file.
+                                  type: string
+                              required:
+                              - key
+                              - path
+                              - volumeName
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            resourceFieldRef:
+                              description: |-
+                                Selects a resource of the container: only resources limits and requests
+                                (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                              properties:
+                                containerName:
+                                  description: 'Container name: required for volumes,
+                                    optional for env vars'
+                                  type: string
+                                divisor:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: Specifies the output format of the
+                                    exposed resources, defaults to "1"
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                resource:
+                                  description: 'Required: resource to select'
+                                  type: string
+                              required:
+                              - resource
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              description: Selects a key of a secret in the pod's
+                                namespace
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  image:
+                    description: Image is the container image to run.
+                    type: string
+                  serviceAccountName:
+                    description: ServiceAccountName for the job pod.
+                    type: string
+                  timeoutSeconds:
+                    default: 30
+                    description: TimeoutSeconds is the maximum time the job may run.
+                    format: int32
+                    type: integer
+                required:
+                - image
+                type: object
+              severity:
+                default: critical
+                description: Severity indicates how a failing result affects cluster
+                  readiness.
+                enum:
+                - critical
+                - warning
+                - info
+                type: string
+            type: object
+          status:
+            description: GateCheckStatus defines the observed state of GateCheck.
+            properties:
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the GateCheck's state.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

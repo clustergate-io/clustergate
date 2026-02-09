@@ -56,9 +56,10 @@ type GateCheckStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=gchk
+// +kubebuilder:resource:scope=Cluster,shortName=gchk
 // +kubebuilder:printcolumn:name="Severity",type=string,JSONPath=`.spec.severity`
 // +kubebuilder:printcolumn:name="Category",type=string,JSONPath=`.spec.category`
+// +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.description`,priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // GateCheck is the Schema for the gatechecks API.

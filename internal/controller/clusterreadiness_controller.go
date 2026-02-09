@@ -38,14 +38,20 @@ type ClusterReadinessReconciler struct {
 	DynamicExecutor *dynamic.Executor
 }
 
-// +kubebuilder:rbac:groups=clustergate.io,resources=clusterreadiness,verbs=get;list;watch
-// +kubebuilder:rbac:groups=clustergate.io,resources=clusterreadiness/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=clustergate.io,resources=clusterreadinesses,verbs=get;list;watch
+// +kubebuilder:rbac:groups=clustergate.io,resources=clusterreadinesses/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups="*",resources="*",verbs=get;list
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=create;delete;get;list;watch
 // +kubebuilder:rbac:groups="",resources=pods/log,verbs=get
+// +kubebuilder:rbac:urls="/healthz",verbs=get
+// +kubebuilder:rbac:urls="/healthz/*",verbs=get
+// +kubebuilder:rbac:urls="/livez",verbs=get
+// +kubebuilder:rbac:urls="/livez/*",verbs=get
+// +kubebuilder:rbac:urls="/readyz",verbs=get
+// +kubebuilder:rbac:urls="/readyz/*",verbs=get
 
 func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)

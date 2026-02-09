@@ -15,5 +15,3 @@ spec:
       severity: warning
     - name: kube-controller-manager
       severity: warning
-    - gateCheckRef: istiod-ready
-      severity: critical

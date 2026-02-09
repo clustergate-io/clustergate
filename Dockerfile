@@ -2,7 +2,7 @@ ARG BASE_IMAGE=mcr.microsoft.com/azurelinux/distroless/minimal:3.0.20260107@sha2
 
 FROM ${BASE_IMAGE}
 WORKDIR /
-COPY manager .
-COPY clustergate .
+COPY bin/manager .
+COPY bin/clustergate .
 USER 65532:65532
 ENTRYPOINT ["/manager"]

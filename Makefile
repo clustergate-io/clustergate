@@ -48,7 +48,7 @@ generate: controller-gen ## Generate DeepCopy methods.
 
 .PHONY: manifests
 manifests: controller-gen ## Generate CRD and RBAC manifests.
-	$(CONTROLLER_GEN) rbac:roleName=clustergate-controller crd \
+	$(CONTROLLER_GEN) rbac:roleName=clustergate-controller crd:allowDangerousTypes=true \
 		paths="./..." \
 		output:crd:artifacts:config=config/crd/bases \
 		output:rbac:dir=config/rbac
@@ -57,11 +57,11 @@ manifests: controller-gen ## Generate CRD and RBAC manifests.
 
 .PHONY: build
 build: generate fmt vet ## Build the manager binary.
-	go build -o bin/manager ./cmd/manager
+	CGO_ENABLED=0 go build -o bin/manager ./cmd/manager
 
 .PHONY: build-cli
 build-cli: fmt vet ## Build the clustergate CLI binary.
-	go build -o bin/clustergate ./cmd/clustergate
+	CGO_ENABLED=0 go build -o bin/clustergate ./cmd/clustergate
 
 .PHONY: build-all
 build-all: build build-cli ## Build both the manager and CLI binaries.
@@ -90,19 +90,33 @@ uninstall: ## Uninstall CRDs from the cluster.
 
 .PHONY: deploy
 deploy: manifests ## Deploy controller to the cluster.
+	kubectl apply -f config/manager/namespace.yaml
 	kubectl apply -f config/crd/bases/
-	kubectl apply -f config/rbac/
-	kubectl apply -f config/manager/
+	kubectl apply -f config/rbac/service_account.yaml
+	kubectl apply -f config/rbac/role.yaml
+	kubectl apply -f config/rbac/role_binding.yaml
+	kubectl apply -f config/rbac/leader_election_role.yaml
+	kubectl apply -f config/rbac/leader_election_role_binding.yaml
+	kubectl apply -f config/manager/manager.yaml
+	kubectl apply -f config/manager/pdb.yaml
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the cluster.
-	kubectl delete -f config/manager/ || true
-	kubectl delete -f config/rbac/ || true
+	kubectl delete -f config/manager/manager.yaml || true
+	kubectl delete -f config/manager/pdb.yaml || true
+	kubectl delete -f config/rbac/leader_election_role_binding.yaml || true
+	kubectl delete -f config/rbac/leader_election_role.yaml || true
+	kubectl delete -f config/rbac/role_binding.yaml || true
+	kubectl delete -f config/rbac/role.yaml || true
+	kubectl delete -f config/rbac/service_account.yaml || true
 	kubectl delete -f config/crd/bases/ || true
+	kubectl delete -f config/manager/namespace.yaml || true
 
 .PHONY: sample
-sample: ## Apply sample ClusterReadiness CR.
-	kubectl apply -f config/samples/
+sample: ## Apply sample CRs.
+	kubectl apply -f config/samples/clusterreadiness_v1alpha1.yaml
+	kubectl apply -f config/samples/gatecheck_v1alpha1.yaml
+	kubectl apply -f config/samples/gateprofile_v1alpha1.yaml
 
 ##@ Tool Dependencies
 
