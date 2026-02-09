@@ -1,17 +1,17 @@
 apiVersion: clustergate.io/v1alpha1
 kind: GateProfile
 metadata:
-  name: production-baseline
+  name: control-plane
 spec:
-  description: "Standard production readiness checks"
+  description: "Baseline control plane readiness checks — ensures all core Kubernetes components are healthy"
   checks:
     - name: kube-apiserver
       severity: critical
     - name: etcd
       severity: critical
+    - name: kube-scheduler
+      severity: critical
+    - name: kube-controller-manager
+      severity: critical
     - name: dns
       severity: critical
-    - name: kube-scheduler
-      severity: warning
-    - name: kube-controller-manager
-      severity: warning

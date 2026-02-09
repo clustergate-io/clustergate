@@ -40,6 +40,18 @@ var (
 		[]string{"cluster_readiness"},
 	)
 
+	// ClusterHealthState is a gauge that reports the cluster health state.
+	// Labels: cluster_readiness (CR name), state (Healthy, Degraded, Unhealthy).
+	// The active state has value 1, others have value 0.
+	ClusterHealthState = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "clustergate",
+			Name:      "cluster_health_state",
+			Help:      "Cluster health state: Healthy (all passing), Degraded (warnings failing), Unhealthy (critical failing). Active state=1.",
+		},
+		[]string{"cluster_readiness", "state"},
+	)
+
 	// CategoryReady is a gauge that reports per-category readiness.
 	// Labels: category, cluster_readiness (CR name).
 	CategoryReady = prometheus.NewGaugeVec(
@@ -53,5 +65,5 @@ var (
 )
 
 func init() {
-	metrics.Registry.MustRegister(CheckReady, CheckDuration, ClusterReady, CategoryReady)
+	metrics.Registry.MustRegister(CheckReady, CheckDuration, ClusterReady, ClusterHealthState, CategoryReady)
 }

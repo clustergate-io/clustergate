@@ -1,16 +1,16 @@
 apiVersion: clustergate.io/v1alpha1
 kind: ClusterReadiness
 metadata:
-  name: production-readiness
+  name: default
 spec:
   interval: 60s
-  # Reference a profile for baseline checks
+  # Baseline: control plane checks ensure the cluster is fundamentally healthy
   profiles:
-    - name: production-baseline
-  # Only add cluster-specific checks inline — profile handles the baseline
+    - name: control-plane
+  # Extend with platform-specific checks as needed:
   # checks:
   #   - gateCheckRef: istiod-ready
-  #     severity: critical
+  #     severity: warning
   #     category: networking
   #   - gateCheckRef: vault-health
   #     severity: warning

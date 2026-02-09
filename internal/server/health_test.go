@@ -21,30 +21,30 @@ func TestReadinessState_IsReady(t *testing.T) {
 		{
 			name: "single ready cluster",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", true, nil, nil, nil)
+				rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
 			},
 			want: true,
 		},
 		{
 			name: "two ready clusters",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", true, nil, nil, nil)
-				rs.Update("cluster-2", true, nil, nil, nil)
+				rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
+				rs.Update("cluster-2", true, "Healthy", nil, nil, nil)
 			},
 			want: true,
 		},
 		{
 			name: "one ready one not ready",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", true, nil, nil, nil)
-				rs.Update("cluster-2", false, nil, nil, nil)
+				rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
+				rs.Update("cluster-2", false, "Unhealthy", nil, nil, nil)
 			},
 			want: false,
 		},
 		{
 			name: "single not ready cluster",
 			setup: func(rs *ReadinessState) {
-				rs.Update("cluster-1", false, nil, nil, nil)
+				rs.Update("cluster-1", false, "Unhealthy", nil, nil, nil)
 			},
 			want: false,
 		},
@@ -63,8 +63,8 @@ func TestReadinessState_IsReady(t *testing.T) {
 
 func TestReadinessState_Remove(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("cluster-1", true, nil, nil, nil)
-	rs.Update("cluster-2", false, nil, nil, nil)
+	rs.Update("cluster-1", true, "Healthy", nil, nil, nil)
+	rs.Update("cluster-2", false, "Unhealthy", nil, nil, nil)
 
 	// Not ready because cluster-2 is failing
 	if rs.IsReady() {
@@ -88,7 +88,7 @@ func TestReadinessState_Remove(t *testing.T) {
 
 func TestReadyzHandler_Ready(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", true, map[string]*CheckState{
+	rs.Update("test-cluster", true, "Healthy", map[string]*CheckState{
 		"dns": {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
 	}, &ReadinessSummaryView{Total: 1, Passing: 1}, nil)
 
@@ -118,7 +118,7 @@ func TestReadyzHandler_Ready(t *testing.T) {
 
 func TestReadyzHandler_NotReady(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", false, map[string]*CheckState{
+	rs.Update("test-cluster", false, "Unhealthy", map[string]*CheckState{
 		"dns": {Ready: false, Message: "failing", Severity: "critical", Category: "networking"},
 	}, nil, nil)
 
@@ -156,7 +156,7 @@ func TestReadyzHandler_Empty(t *testing.T) {
 
 func TestReadyzHandler_CategoryFilter(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", true, map[string]*CheckState{
+	rs.Update("test-cluster", true, "Healthy", map[string]*CheckState{
 		"dns":     {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
 		"ingress": {Ready: false, Message: "failing", Severity: "critical", Category: "networking"},
 		"vault":   {Ready: true, Message: "ok", Severity: "critical", Category: "security"},
@@ -194,7 +194,7 @@ func TestReadyzHandler_CategoryFilter(t *testing.T) {
 
 func TestReadyzHandler_SeverityFilter(t *testing.T) {
 	rs := NewReadinessState()
-	rs.Update("test-cluster", false, map[string]*CheckState{
+	rs.Update("test-cluster", false, "Degraded", map[string]*CheckState{
 		"dns":     {Ready: true, Message: "ok", Severity: "critical", Category: "networking"},
 		"logging": {Ready: false, Message: "degraded", Severity: "warning", Category: "observability"},
 	}, nil, nil)

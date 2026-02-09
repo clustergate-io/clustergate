@@ -219,12 +219,32 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Readiness is determined by critical checks only
 	allCriticalReady := summary.CriticalTotal == summary.CriticalPassing
 
+	// Compute the cluster health state:
+	// Healthy = all checks passing
+	// Degraded = all critical passing but warning checks failing
+	// Unhealthy = any critical check failing
+	var healthState clustergatev1alpha1.ClusterHealthState
+	if !allCriticalReady {
+		healthState = clustergatev1alpha1.ClusterUnhealthy
+	} else if summary.WarningFailing > 0 {
+		healthState = clustergatev1alpha1.ClusterDegraded
+	} else {
+		healthState = clustergatev1alpha1.ClusterHealthy
+	}
+
 	// Update overall metrics.
 	clusterReadyVal := float64(0)
 	if allCriticalReady {
 		clusterReadyVal = 1
 	}
 	metrics.ClusterReady.WithLabelValues(req.Name).Set(clusterReadyVal)
+	metrics.ClusterHealthState.WithLabelValues(req.Name, string(healthState)).Set(1)
+	// Reset other state gauges
+	for _, s := range []string{"Healthy", "Degraded", "Unhealthy"} {
+		if s != string(healthState) {
+			metrics.ClusterHealthState.WithLabelValues(req.Name, s).Set(0)
+		}
+	}
 
 	// Build health server summary view
 	healthSummary := &server.ReadinessSummaryView{
@@ -247,10 +267,11 @@ func (r *ClusterReadinessReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	// Update health server state.
-	r.ReadinessState.Update(req.Name, allCriticalReady, healthChecks, healthSummary, healthCategorySummaries)
+	r.ReadinessState.Update(req.Name, allCriticalReady, string(healthState), healthChecks, healthSummary, healthCategorySummaries)
 
 	// Update CR status.
 	cr.Status.Ready = allCriticalReady
+	cr.Status.State = healthState
 	cr.Status.LastChecked = &now
 	cr.Status.Checks = checkStatuses
 	cr.Status.Summary = summary

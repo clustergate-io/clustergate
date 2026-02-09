@@ -15,6 +15,7 @@ type ReadinessState struct {
 // ClusterState represents readiness for a single ClusterReadiness CR.
 type ClusterState struct {
 	Ready             bool                   `json:"ready"`
+	State             string                 `json:"state"`
 	Summary           *ReadinessSummaryView  `json:"summary,omitempty"`
 	CategorySummaries []CategorySummaryView  `json:"categorySummaries,omitempty"`
 	Checks            map[string]*CheckState `json:"checks,omitempty"`
@@ -55,11 +56,12 @@ func NewReadinessState() *ReadinessState {
 }
 
 // Update sets the readiness state for a given ClusterReadiness CR.
-func (rs *ReadinessState) Update(name string, ready bool, checks map[string]*CheckState, summary *ReadinessSummaryView, categorySummaries []CategorySummaryView) {
+func (rs *ReadinessState) Update(name string, ready bool, state string, checks map[string]*CheckState, summary *ReadinessSummaryView, categorySummaries []CategorySummaryView) {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
 	rs.states[name] = &ClusterState{
 		Ready:             ready,
+		State:             state,
 		Summary:           summary,
 		CategorySummaries: categorySummaries,
 		Checks:            checks,

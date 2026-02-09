@@ -79,6 +79,13 @@ type ClusterReadinessStatus struct {
 	// Ready indicates whether all critical-severity checks are passing.
 	Ready bool `json:"ready"`
 
+	// State is the overall cluster health: Healthy, Degraded, or Unhealthy.
+	// Healthy means all checks are passing.
+	// Degraded means all critical checks pass but one or more warning checks are failing.
+	// Unhealthy means one or more critical checks are failing.
+	// +optional
+	State ClusterHealthState `json:"state,omitempty"`
+
 	// Summary provides aggregated counts across all checks.
 	// +optional
 	Summary *ReadinessSummary `json:"summary,omitempty"`
@@ -172,6 +179,7 @@ type CheckStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
 // +kubebuilder:printcolumn:name="Ready",type=boolean,JSONPath=`.status.ready`
 // +kubebuilder:printcolumn:name="Passing",type=integer,JSONPath=`.status.summary.passing`
 // +kubebuilder:printcolumn:name="Failing",type=integer,JSONPath=`.status.summary.failing`

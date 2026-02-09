@@ -3,8 +3,8 @@ kind: GateCheck
 metadata:
   name: istiod-ready
 spec:
-  description: "Verifies istiod control plane pods are running"
-  severity: critical
+  description: "Verifies istiod control plane pods are running — extend baseline with service mesh readiness"
+  severity: warning
   category: networking
   podCheck:
     namespace: istio-system

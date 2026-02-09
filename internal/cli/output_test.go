@@ -10,6 +10,7 @@ import (
 func TestFormatText_AllPass(t *testing.T) {
 	report := &Report{
 		Ready:  true,
+		State:  "Healthy",
 		Total:  2,
 		Passed: 2,
 		Failed: 0,
@@ -32,8 +33,8 @@ func TestFormatText_AllPass(t *testing.T) {
 	if strings.Contains(out, "[FAIL]") {
 		t.Error("did not expect [FAIL] in output")
 	}
-	if !strings.Contains(out, "Status: PASS") {
-		t.Error("expected Status: PASS in output")
+	if !strings.Contains(out, "Cluster State: Healthy") {
+		t.Error("expected Cluster State: Healthy in output")
 	}
 	if !strings.Contains(out, "2/2 passed") {
 		t.Error("expected 2/2 passed in output")
@@ -43,6 +44,7 @@ func TestFormatText_AllPass(t *testing.T) {
 func TestFormatText_SomeFail(t *testing.T) {
 	report := &Report{
 		Ready:  false,
+		State:  "Unhealthy",
 		Total:  2,
 		Passed: 1,
 		Failed: 1,
@@ -62,8 +64,8 @@ func TestFormatText_SomeFail(t *testing.T) {
 	if !strings.Contains(out, "[FAIL] kube-apiserver") {
 		t.Error("expected [FAIL] kube-apiserver in output")
 	}
-	if !strings.Contains(out, "Status: FAIL") {
-		t.Error("expected Status: FAIL in output")
+	if !strings.Contains(out, "Cluster State: Unhealthy") {
+		t.Error("expected Cluster State: Unhealthy in output")
 	}
 	if !strings.Contains(out, "1 failed") {
 		t.Error("expected '1 failed' in output")
@@ -73,6 +75,7 @@ func TestFormatText_SomeFail(t *testing.T) {
 func TestFormatText_WithErrors(t *testing.T) {
 	report := &Report{
 		Ready:  false,
+		State:  "Unhealthy",
 		Total:  1,
 		Passed: 0,
 		Failed: 1,
@@ -91,13 +94,13 @@ func TestFormatText_WithErrors(t *testing.T) {
 	if !strings.Contains(out, "connection refused") {
 		t.Error("expected error message in output")
 	}
-	if !strings.Contains(out, "Status: FAIL") {
-		t.Error("expected Status: FAIL in output")
+	if !strings.Contains(out, "Cluster State: Unhealthy") {
+		t.Error("expected Cluster State: Unhealthy in output")
 	}
 }
 
 func TestFormatText_Empty(t *testing.T) {
-	report := &Report{Ready: true}
+	report := &Report{Ready: true, State: "Healthy"}
 
 	var buf bytes.Buffer
 	FormatText(&buf, report)
@@ -106,14 +109,15 @@ func TestFormatText_Empty(t *testing.T) {
 	if !strings.Contains(out, "0/0 passed") {
 		t.Error("expected 0/0 passed in output")
 	}
-	if !strings.Contains(out, "Status: PASS") {
-		t.Error("expected Status: PASS in output")
+	if !strings.Contains(out, "Cluster State: Healthy") {
+		t.Error("expected Cluster State: Healthy in output")
 	}
 }
 
 func TestFormatJSON_AllPass(t *testing.T) {
 	report := &Report{
 		Ready:  true,
+		State:  "Healthy",
 		Total:  1,
 		Passed: 1,
 		Failed: 0,
@@ -142,6 +146,7 @@ func TestFormatJSON_AllPass(t *testing.T) {
 func TestFormatJSON_SomeFail(t *testing.T) {
 	report := &Report{
 		Ready:  false,
+		State:  "Unhealthy",
 		Total:  2,
 		Passed: 1,
 		Failed: 1,
@@ -169,7 +174,7 @@ func TestFormatJSON_SomeFail(t *testing.T) {
 }
 
 func TestFormatJSON_Indented(t *testing.T) {
-	report := &Report{Ready: true, Total: 1, Passed: 1, Checks: []CheckResult{
+	report := &Report{Ready: true, State: "Healthy", Total: 1, Passed: 1, Checks: []CheckResult{
 		{Name: "dns", Ready: true, Message: "ok"},
 	}}
 
@@ -186,6 +191,7 @@ func TestFormatJSON_Indented(t *testing.T) {
 func TestFormatText_CategoryAndSeverity(t *testing.T) {
 	report := &Report{
 		Ready:  true,
+		State:  "Healthy",
 		Total:  1,
 		Passed: 1,
 		Checks: []CheckResult{

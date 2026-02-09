@@ -39,11 +39,7 @@ func FormatText(w io.Writer, report *Report) {
 		fmt.Fprintf(w, "Results: %d/%d passed\n", report.Passed, report.Total)
 	}
 
-	if report.Ready {
-		fmt.Fprintln(w, "Status: PASS")
-	} else {
-		fmt.Fprintln(w, "Status: FAIL")
-	}
+	fmt.Fprintf(w, "Cluster State: %s\n", report.State)
 }
 
 // FormatJSON writes the report as indented JSON to the writer.
