@@ -1,0 +1,19 @@
+apiVersion: clustergate.io/v1alpha1
+kind: GateProfile
+metadata:
+  name: production-baseline
+spec:
+  description: "Standard production readiness checks"
+  checks:
+    - name: kube-apiserver
+      severity: critical
+    - name: etcd
+      severity: critical
+    - name: dns
+      severity: critical
+    - name: kube-scheduler
+      severity: warning
+    - name: kube-controller-manager
+      severity: warning
+    - gateCheckRef: istiod-ready
+      severity: critical

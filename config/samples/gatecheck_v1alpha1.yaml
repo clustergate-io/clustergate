@@ -1,0 +1,14 @@
+apiVersion: clustergate.io/v1alpha1
+kind: GateCheck
+metadata:
+  name: istiod-ready
+spec:
+  description: "Verifies istiod control plane pods are running"
+  severity: critical
+  category: networking
+  podCheck:
+    namespace: istio-system
+    labelSelector:
+      matchLabels:
+        app: istiod
+    minReady: 2

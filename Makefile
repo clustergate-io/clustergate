@@ -1,7 +1,7 @@
 IMG ?= clustergate:latest
 
 # Tool versions
-CONTROLLER_TOOLS_VERSION ?= v0.14.0
+CONTROLLER_TOOLS_VERSION ?= v0.17.0
 ENVTEST_K8S_VERSION ?= 1.33.0
 
 # Local bin directory for tool binaries
